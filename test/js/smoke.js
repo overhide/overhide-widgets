@@ -1,15 +1,33 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 
+const props = {
+  debug: {
+    headless: false,
+    timeout: `${24*60*60}s`
+  },
+  run: {
+    headless: true,
+    timeout : '5s'    
+  }
+}
+
+// to debug tests with browser -- e.g. put breakpoints and inspect browser console:
+//
+// [1] change the `env` below from 'run' to 'debug' 
+// [2] put a `await bp();` statement in the test's `go` function
+
+const env = props['run'];
+
 async function go (fn) {
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await puppeteer.launch({ headless: env.headless, args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.goto(`file:${path.join(__dirname, '../html/index.html')}`);
+  await page.goto(`http://localhost:8099/test/html/index.html`);
   await page.evaluate(fn);
 }
 
 describe('ledgers.js smoke', function() {
-  this.timeout('20s');
+  this.timeout(env.timeout);
 
   it('finds my-try', async () => {
     await go(async () => {

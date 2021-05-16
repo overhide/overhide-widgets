@@ -1,13 +1,13 @@
 {
-  "name": "fast-todo-app",
+  "name": "overhide-widgets",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist && webpack --config webpack.config.js --mode=production",
     "dev": "webpack-dev-server",
-    "serve": "http-server -c-1",
-    "test": "mocha --exit test/js",
+    "serve": "http-server -c-1 -p 8099",
+    "test": "concurrently -k -s first \"npm run serve\" \"mocha --exit test/js\"",
     "test-report": "mocha --exit test/js --reporter mocha-junit-reporter --reporter-options toConsole=true,mochaFile=test-report/test-report.xml"
   },
   "author": "",
@@ -24,6 +24,7 @@
     "http-server": "^0.12.1",
     "chai": "4.2.0",
     "chai-http": "4.2.0",
+    "concurrently": "6.1.0",
     "mocha": "5.2.0",
     "mocha-junit-reporter": "1.22.0",
     "puppeteer": "^1.15.0",

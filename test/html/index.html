@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <script src="https://unpkg.com/chai/chai.js"></script>        
-        <script src="https://unpkg.com/@microsoft/fast-components"></script>
-        <script src="../../dist/bundle.js"></script>
-    </head>
-    <body>
-      <fast-design-system-provider use-defaults>
-        <my-try id="my-try" text="foo"></my-try>
-      </fast-design-system-provider>
-    </body>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://unpkg.com/chai/chai.js"></script>        
+    <script src="https://unpkg.com/@microsoft/fast-components"></script>
+    <script src="http://localhost:8099/dist/bundle.js"></script>
+  </head>
+  <body>
+    <fast-design-system-provider use-defaults>
+      <my-try id="my-try" text="foo"></my-try>
+    </fast-design-system-provider>
+  </body>
+  <script>
+    // utility breakpoint (sleep 24h)
+    //
+    // use:  await bp();
+    function bp() {
+      return new Promise(function(resolve) { 
+          setTimeout(resolve, 24 * 60 * 60 * 1000);
+      });
+    }
+  </script>
 </html>
