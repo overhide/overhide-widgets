@@ -15,14 +15,15 @@ const props = {
 // to debug tests with browser -- e.g. put breakpoints and inspect browser console:
 //
 // [1] change the `env` below from 'run' to 'debug' 
-// [2] put a `await bp();` statement in the test's `go` function
+// [2] put a `await stop();` statement in the test's `go` function
 
-const env = props['run'];
+const env = props['debug'];
 
 async function go (fn) {
   const browser = await puppeteer.launch({ headless: env.headless, args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.goto(`http://localhost:8099/test/html/index.html`);
+  await page.goto(`http://localhost:8099/test/html/smoke.html`);
+  await page.waitForSelector('#overhide-widgets-demo')
   await page.evaluate(fn);
 }
 
@@ -31,7 +32,7 @@ describe('ledgers.js smoke', function() {
 
   it('finds my-try', async () => {
     await go(async () => {
-      const handle = document.querySelector("body > fast-design-system-provider > my-try#my-try").shadowRoot.querySelector("div > h3")
+      const handle = document.querySelector("#overhide-widgets-demo my-try#my-try").shadowRoot.querySelector("div > h3")
       chai.assert(handle != null);
     });
   });

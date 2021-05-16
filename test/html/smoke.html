@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/chai/chai.js"></script>
+  </head>
+
+  <body>
+    <div id="includedContent"></div>
+  </body>
+  
+  <script>
+    // utility breakpoint (sleep 24h)
+    //
+    // use:  await stop();
+    function stop() {
+      return new Promise(function(resolve) { 
+          setTimeout(resolve, 24 * 60 * 60 * 1000);
+      });
+    }
+
+    $(function(){
+      $("#includedContent").load("http://localhost:8099/demo/index.html"); 
+    });
+
+  </script>
+</html>
