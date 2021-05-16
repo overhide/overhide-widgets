@@ -13,8 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@fluentui/web-components": "latest",
-    "@microsoft/fast-colors": "^5.0.12",
     "@microsoft/fast-element": "latest",
     "@microsoft/fast-foundation": "latest",
     "lodash-es": "4.17.15",

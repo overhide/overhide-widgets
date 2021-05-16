@@ -20,7 +20,8 @@ module.exports = function(env, { mode }) {
       historyApiFallback: true,
       writeToDisk: true,
       open: !process.env.CI,
-      lazy: false
+      lazy: false,
+      contentBase: [__dirname, path.join(__dirname, 'demo-front-end')]
     },
     module: {
       rules: [
