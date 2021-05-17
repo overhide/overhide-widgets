@@ -33,7 +33,18 @@ module.exports = function(env, { mode }) {
             }
           ],
           exclude: /node_modules/
-        }
+        },
+        {
+          test: /\.(css|svg)$/i,
+          use: [
+            {
+              loader: "raw-loader",
+              options: {
+                esModule: false
+              }
+            }
+          ],
+        }      
       ]
     }
   }

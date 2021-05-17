@@ -19,13 +19,14 @@
     "tslib": "^1.11.1"
   },
   "devDependencies": {
-    "http-server": "^0.12.1",
     "chai": "4.2.0",
     "chai-http": "4.2.0",
     "concurrently": "6.1.0",
+    "http-server": "^0.12.1",
     "mocha": "5.2.0",
     "mocha-junit-reporter": "1.22.0",
     "puppeteer": "^1.15.0",
+    "raw-loader": "^4.0.2",
     "rimraf": "^3.0.2",
     "ts-loader": "^7.0.1",
     "typescript": "^3.8.3",

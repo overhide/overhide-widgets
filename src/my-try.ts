@@ -6,8 +6,12 @@ import {
     attr
 } from "@microsoft/fast-element";
 
+import w3Css from "./static/w3.css";
+import someIcon from "./static/icons/oh-ledger-coin.svg";
+
 const template = html<MyTry>`
-<div>
+<div class="w3-panel w3-red">
+  ${someIcon}
   <h3 id="my-try">text: ${x => x.text.toUpperCase()}</h3>
 </div>
 `;
@@ -20,6 +24,8 @@ const styles = css`
 .footer {
   color: cornflowerblue;
 }
+
+${w3Css}
 `;
 
 @customElement({
