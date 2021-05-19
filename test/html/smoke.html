@@ -20,6 +20,29 @@
       });
     }
 
+    // execute fn with a retry over 3 seconds.
+    function waitFor(fn) {
+      var retry = 0;
+      return new Promise((resolve, reject) => {
+        const repeatFn = () => {
+          const result = fn();
+          if (result) {
+            resolve(result);
+            return;
+          } else {
+            retry++;
+            if (retry > 12) {
+              reject('retries exchausted');
+              return;
+            }
+            setTimeout(repeatFn, 250);
+          }
+        }
+
+        repeatFn();
+      });
+    }
+
     $(function(){
       $("#includedContent").load("http://localhost:8099/demo-front-end/index.html"); 
     });

@@ -31,8 +31,8 @@ describe('ledgers.js smoke', function() {
   this.timeout(env.timeout);
 
   it('finds my-try', async () => {
-    await go(async () => {
-      const handle = document.querySelector("#overhide-widgets-demo my-try#my-try").shadowRoot.querySelector("div > h3")
+    await go(async () => {      
+      const handle = await waitFor (() => document.querySelector("#overhide-widgets-demo my-try#my-try").shadowRoot.querySelector("div > h3"))
       chai.assert(handle != null);
     });
   });
