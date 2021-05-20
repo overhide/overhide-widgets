@@ -70,28 +70,7 @@ class PaymentsService {
     this.#updateApplicationStateFn = updateApplicationStateFn;
     this.#setError = setErrorFn;
 
-    this.#paymentsInfo = {
-      getInfo: this.#getInfo,                   // public function: returns an object with currency ('dollars' or 'ethers'), address, message, signature, ledgerUri
-      isAuthenticated: this.#isAuthenticated,       // public function: is current crednetial authenticatd against the current currency's ledger? 
-      getOutstanding: this.#getOutstanding,         // public function: does current currency ledger have 'amount' or more paid 
-                                                    //                  'to' recepient 'since' (or all if 'since' null)?
-                                                    //                  Differnce in dollars or ethers, $0 if authorized.
-                                                    //                  Null if not yet known: will update application state.
-      topUp: this.#topUp,                           // public function: top-up payments 'to' recepient on the current currency ledger with 'amount'
-
-      enabled: {},                              // keyed by (currentCurrency || defaultCurrency); informs if currency available, e.g. wallet availble
-      wallet: {},                               // keyed by (currentCurrency || defaultCurrency); informs of currently used wallet, or null
-      isOnLedger: {},                           // keyed by (currentCurrency || defaultCurrency); informs if currently used credentials are on ledger
-      pendingTransaction: {},                   // keyed by (currentCurrency || defaultCurrency); informs amount of currently pending transaction or null
-      defaultCurrency: defaultCurrency,         // default payment currency, either 'dollars' or 'ethers'
-      currentCurrency: null,                    // chosen payment currency, either 'dollars', 'ethers', or null
-      payerAddress: null,                       // (out only) payer's public address as set by service
-      payerPrivateKey: null,                    // payer's private key (receipt code) iff not using wallet, null if using wallet
-      payerSignature: null,                     // signed `messageToSign` by payer
-      messageToSign: null,                      // message to sign into `payerSignature`
-      service: this,                            // this service instance, for working with exposed public methods
-      time: new Date()                          // just a timestamp for refresh
-    };
+    this.#paymentsInfo = {};
 
     this.#allowNetworkType = allowTestOnly ? 'test' : 'prod';
     this.#init();
@@ -140,7 +119,7 @@ class PaymentsService {
   }
 
   #getInfo = () => {
-    return {
+    return <Info>{
       currency: this.#getCurrentCurrency(),
       address: this.#paymentsInfo.payerAddress,
       message: this.#paymentsInfo.messageToSign,
