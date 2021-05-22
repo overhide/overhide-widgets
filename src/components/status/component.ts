@@ -27,7 +27,7 @@ ${w3Css}
   styles,
 })
 export class OverhideStatus extends FASTElement {
-  @attr hubId: string = 'my-try';
+  @attr hubId: string = 'demo-hub';
 
   constructor() {
     super(); 

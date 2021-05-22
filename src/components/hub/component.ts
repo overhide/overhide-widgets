@@ -8,30 +8,32 @@ import {
 } from "@microsoft/fast-element";
 
 import {
+  CURRENCY_BY_IMPARTER,
   NETWORKS_BY_IMPARTER,
   Currency,
   Imparter,
-  Info,
-  PaymentsInfo
+  PaymentsInfo,
+  NetworkType
 } from './definitions';
 
+import oh$ from "ledgers.js";
 import w3Css from "./static/w3.css";
 import someIcon from "./static/icons/oh-ledger-coin.svg";
 
 const template = html<OverhideHub>`
-<div class="w3-panel w3-red">
-${someIcon}
-<h3 id="my-try">text: ${x => x.text.toUpperCase()}</h3>
+<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato" />
+
+<div id="body">
+  <div class="w3-panel w3-red">
+  ${someIcon}
+  </div>
 </div>
 `;
 
 const styles = css`
-.body {
-font-weight: bold;
-}
-
-.footer {
-color: cornflowerblue;
+#body {
+  font-family: Lato;
+  font-variant: small-caps;
 }
 
 ${w3Css}
@@ -43,15 +45,22 @@ ${w3Css}
   styles,
 })
 export class OverhideHub extends FASTElement {
-  @attr text = "foo";
 
   // payments object
   @observable paymentsInfo: PaymentsInfo = {
-    currentCurrency = Currency.dollars,
-    currentImparter = Imparter.ohledger,
-    defaultCurrency = Currency.dollars,
-    defaultImparter = Imparter.ohledger,
-    enabled = {
+    currentCurrency: Currency.dollars,
+    currentImparter: Imparter.ohledger,
+    defaultCurrency: Currency.dollars,
+    defaultImparter: Imparter.ohledger,
+   
+    setError: (error: string) => this.setError(error),
+    setImparter: (imparter: Imparter) => this.setCurrentImparter(imparter),
+    setSecretKey: (key: string) => this.setSecretKey(key),
+    getOutstanding: (costInDollars: number, to: string, minutes: number) => this.getOutstanding(costInDollars, to, minutes),
+    topUp: (amountDollars: number, toAddress: string) => this.topUp(amountDollars, toAddress),
+
+    isAuthenticated: false,
+    enabled: {
       "btc-manual": false,
       "eth-web3": false,
       "ohledger-social": false,
@@ -59,10 +68,7 @@ export class OverhideHub extends FASTElement {
       ohledger: false,
       unknown: false
     },
-    getInfo = this.#getInfo,
-    getOutstanding = this.#getOutstanding,
-    isAuthenticated = false,
-    isOnLedger = {
+    isOnLedger: {
       "btc-manual": false,
       "eth-web3": false,
       "ohledger-social": false,
@@ -70,8 +76,7 @@ export class OverhideHub extends FASTElement {
       ohledger: false,
       unknown: false
     },
-    topUp = this.#topUp,
-    wallet = {
+    wallet: {
       "btc-manual": false,
       "eth-web3": false,
       "ohledger-social": false,
@@ -79,7 +84,7 @@ export class OverhideHub extends FASTElement {
       ohledger: false,
       unknown: false
     },
-    pendingTransaction = {
+    pendingTransaction: {
       "btc-manual": false,
       "eth-web3": false,
       "ohledger-social": false,
@@ -87,49 +92,66 @@ export class OverhideHub extends FASTElement {
       ohledger: false,
       unknown: false
     },
-    time = new Date()
+    ledgerUri: undefined,
+    time: new Date()
   };
   
   // set error if any
-  @observable error: string? = null;
+  @observable error: string | null = null;
 
   connectedCallback() {
     super.connectedCallback();
     console.log('my-header is now connected to the DOM');
   };
 
-  #allowNetworkType;
+  #allowNetworkType: NetworkType;
 
-  constructor(private allowTestOnly: boolean = true) {
+  constructor(private isTest: boolean = true) {
     super();
-    this.#allowNetworkType = allowTestOnly ? 'test' : 'prod';
+    this.#allowNetworkType = isTest ? NetworkType.test : NetworkType.prod;
     this.#init();
   }
 
-  // Set current currency
-  // @param {string} currency - to set (allowed values: 'dollars' or 'ethers')
-  setCurrentCurrency = async (currency) => {
-    this.#outstandingCache = {}; // reset outstanding cache
-    let newInfo = this.#paymentsInfo;
-    newInfo.currentCurrency = currency;
-    if (!this.#isAuthenticated()) {
-      await this.#authenticate(currency);
+  // @param {string} error -- the error string to set
+  setError = (error: string) => {
+    this.error = error;
+  }
+
+  // Set current imparter and authenticates
+  // @param {Imparter} imparter - to set
+  setCurrentImparter = async (imparter: Imparter) => {
+    const oldInfo = {...this.paymentsInfo};
+    try {
+      this.#outstandingCache = {}; // reset outstanding cache
+      this.paymentsInfo.currentImparter = imparter;
+      this.paymentsInfo.currentCurrency = CURRENCY_BY_IMPARTER[imparter];
+      this.paymentsInfo.ledgerUri = imparter === Imparter.unknown ? undefined : oh$.getOverhideRemunerationAPIUri();
+
+      if (imparter !== Imparter.unknown && !this.#isAuthenticated()) {
+        await this.#authenticate(imparter);
+      }
+      this.#pingApplicationState();
     }
-    this.#updateApplicationStateFn(newInfo);
+    catch (e) 
+    {
+      this.paymentsInfo = {...oldInfo};
+      this.error = e;
+    }
   }
 
   // Sets credentials secret key for non-wallet workflow
   // @param {string} new key - to set
-  setSecretKey = async (newKey) => {
+  setSecretKey = async (newKey: string) => {
+    const oldInfo = {...this.paymentsInfo};
     try {
-      this.#setError(null);
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      if (!this.#paymentsInfo.wallet[currency]) {
+      const imparter = this.#getCurrentImparter();
+      if (imparter === Imparter.unknown) this.error = 'cannot set secret, imparter not set';
+      if (!this.paymentsInfo.wallet[imparter]) {
         await oh$.setCredentials(imparter, {secret: newKey});
       }
     } catch (error) {
-      this.#setError(`Paste or generate a key.`);
+      this.paymentsInfo = {...oldInfo};
+      this.error = `Paste or generate a key.`;
     }
   }
 
@@ -137,137 +159,110 @@ export class OverhideHub extends FASTElement {
   // Updates paymentsInfo provided by service.
   // No-op if current currency has a wallet set.
   generateNewKeys = async () => {
+    const oldInfo = {...this.paymentsInfo};
     try {
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      if (!this.#paymentsInfo.wallet[currency]) {
+      const imparter = this.#getCurrentImparter();
+      if (imparter === Imparter.unknown) this.error = 'cannot generate new key, imparter not set';
+      if (!this.paymentsInfo.wallet[imparter]) {
         await oh$.generateCredentials(imparter,null);
       }
     } catch (error) {
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
+      this.paymentsInfo = {...oldInfo};
+      this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
-  #getInfo = () => {
-    return <Info>{
-      currency: this.#getCurrentCurrency(),
-      address: this.#paymentsInfo.payerAddress,
-      message: this.#paymentsInfo.messageToSign,
-      signature: this.#paymentsInfo.payerSignature,
-      ledgerUri: oh$.getOverhideRemunerationAPIUri()
-    };
-  }
-
-  // @returns {string} 'dollars' or 'ethers'.
+  // @returns {Currency} 
   #getCurrentCurrency = () => {
-    return this.#paymentsInfo.currentCurrency || this.#paymentsInfo.defaultCurrency;
+    return this.paymentsInfo.currentCurrency || this.paymentsInfo.defaultCurrency;
+  }  
+
+  // @returns {Imparter} 
+  #getCurrentImparter = () => {
+    return this.paymentsInfo.currentImparter || this.paymentsInfo.defaultImparter;
   }
 
   // Is current crednetial authenticatd against the current currency's ledger? 
   // @returns {bool} after checking signature and whether ledger has any transactions (to anyone)
   #isAuthenticated = () => {
-    const currency = this.#getCurrentCurrency();
-    return this.#paymentsInfo.isOnLedger[currency];
+    const imparter = this.#getCurrentImparter();
+    return this.paymentsInfo.isOnLedger[imparter];
   }
 
-  #authenticate = async (currency) => {
-    if (currency !== this.#getCurrentCurrency()) return;
+  #authenticate = async (imparter: Imparter) => {
+    if (imparter !== this.#getCurrentImparter()) throw `imparter mismatch in #authenticate`;
     this.#outstandingCache = {}; // reset outstanding cache
-    if ((!this.#paymentsInfo.payerSignature 
-         || !this.#paymentsInfo.messageToSign)) {
+    if ((!this.paymentsInfo.payerSignature 
+          || !this.paymentsInfo.messageToSign)) {
       await this.#sign();
     }
-    await this.#isOnLedger()
+    await this.#isOnLedger()  
   }
 
   // cache of outstanding results
-  #outstandingCache = {};
+  #outstandingCache: {[key: string]: number} = {};
 
   // Get balance outstanding for authorization as per current currency.
-  // @param {number} cost - amount expected to tally (in dollars or ethers)
+  // @param {number} costInDollars - amount expected to tally (in dollars or ethers)
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
-  // @returns {number} differnce in dollars or ethers, $0 if authorized, null if not yet known.
-  #getOutstanding = (cost, to, tallyMinutes) => {
+  // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
+  getOutstanding = (costInDollars: number, to: string, tallyMinutes: number): number | null => {
     const currency = this.#getCurrentCurrency();
-    const key = `${currency}_${cost}_${to}_${tallyMinutes}`;
+    const imparter = this.#getCurrentImparter();
+    if (currency === Currency.unknown || imparter === Imparter.unknown) throw `unknown current currency/imparter in getOutstanding`;
+    const key = `${imparter}_${costInDollars}_${to}_${tallyMinutes}`;
     console.log(`#getOutstanding(${key}) = ${this.#outstandingCache[key]}`);
     if (key in this.#outstandingCache) {
       return this.#outstandingCache[key];
     }
-    this.#outstandingCache[key] = null; // for re-requests
+    delete this.#outstandingCache[key]; // for re-requests
     (async () => {
+      const oldInfo = {...this.paymentsInfo};
       try {
-        const imparter = this.#getImparter();
         let tally;
         const creds = await oh$.getCredentials(imparter);
         if (!creds || !creds.address) {
-          this.#outstandingCache[key] = cost;
+          this.#outstandingCache[key] = costInDollars;
           this.#pingApplicationState();
           return;
         };
         if (tallyMinutes) {
           let since = new Date();
           since.setMinutes(since.getMinutes() - tallyMinutes);
-          tally = await oh$.getTally(imparter, { address: to }, since);
+          tally = await oh$.getTallyDollars(imparter, { address: to }, since);
         } else {
-          tally = await oh$.getTally(imparter, { address: to }, null);
-        }
-        switch (currency) {
-          case 'dollars':
-            cost = cost * CENTS_IN_DOLLAR; // need cents
-            break;
-          case 'ethers':
-            cost = cost * WEI_IN_ETHER; // need wei
-            break;
-          default:
-        }      
-        var delta = cost - tally;
+          tally = await oh$.getTallyDollars(imparter, { address: to }, null);
+        } 
+        
+        var delta = costInDollars - tally;
         delta = delta < 0 ? 0 : delta;
-        switch (currency) {
-          case 'dollars':
-            this.#outstandingCache[key] = delta / CENTS_IN_DOLLAR; // need dollars
-            this.#pingApplicationState();
-            return;
-          case 'ethers':
-            this.#outstandingCache[key] = delta / WEI_IN_ETHER; // need cents
-            this.#pingApplicationState();
-            return;
-          default:
-        }      
+        this.#outstandingCache[key] = delta;
+        this.#pingApplicationState();
       } catch (error) {
-        this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
+        this.paymentsInfo = {...oldInfo};
+        this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
       }  
     })();
     return null;
   }
 
   // Do the actual topup to authorize
-  // @param {number} amount - amount to topup (in dollars or ethers), can be 0 to just create a free transaction for getting on ledger
+  // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger
   // @param {} toAddress - to pay
-  #topUp = async (amount, toAddress) => {
+  topUp = async (amountDollars: number, toAddress: string) => {
     const currency = this.#getCurrentCurrency();
-    const wallet = this.#paymentsInfo.wallet[currency];
-    const imparter = this.#getImparter();
-    switch (currency) {
-      case 'dollars':
-        amount = amount * CENTS_IN_DOLLAR; // need cents
-        if (!wallet) {
-          await oh$.setCredentials(imparter, {secret: this.#paymentsInfo.payerPrivateKey});
-        }
-        break;
-      case 'ethers':
-        amount = amount * WEI_IN_ETHER; // need wei
-        break;
-      default:
-    }
+    const imparter = this.#getCurrentImparter();
+    const oldInfo = {...this.paymentsInfo};
     try {
-      this.#paymentsInfo.pendingTransaction[currency] = amount;
+      const wallet = this.paymentsInfo.wallet[imparter];
+        const amount = await oh$.getFromDollars(imparter, amountDollars);
+      this.paymentsInfo.pendingTransaction[imparter] = amount;
       let aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
       let before = await oh$.getTally(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before
-      let options = this.#paymentsInfo.payerSignature && this.#paymentsInfo.messageToSign && {
-          message: this.#paymentsInfo.messageToSign, 
-          signature: this.#paymentsInfo.payerSignature
+      let options = this.paymentsInfo.payerSignature && this.paymentsInfo.messageToSign && {
+          message: this.paymentsInfo.messageToSign, 
+          signature: this.paymentsInfo.payerSignature
         };
       await oh$.createTransaction(imparter, amount, toAddress, options);
       if (amount > 0) {
@@ -276,118 +271,99 @@ export class OverhideHub extends FASTElement {
           if (now > before) break;                                          // ... and exit out as soon as decentralized
                                                                             //     ledger is consistent between the wallet's
                                                                             //     node and ledgers.js node
-          await delay(5000);                                                // ... else wait 5 seconds
+          await this.delay(5000);                                                // ... else wait 5 seconds
         }  
       }
-      this.#paymentsInfo.pendingTransaction[currency] = null;
-      this.#paymentsInfo.isOnLedger[currency] = true;      
+      this.paymentsInfo.pendingTransaction[imparter] = false;
+      this.paymentsInfo.isOnLedger[imparter] = true;      
       this.#outstandingCache = {}; // reset outstanding cache
       this.#pingApplicationState();
     } catch (error) {
-      this.#paymentsInfo.pendingTransaction[currency] = null;
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
+      this.paymentsInfo = {...oldInfo};
+      this.paymentsInfo.pendingTransaction[imparter] = false;
+      this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
   // Trigger redraw via application state update
   #pingApplicationState = () => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.time = new Date();
-    this.#updateApplicationStateFn(newInfo);
+    this.paymentsInfo = {...this.paymentsInfo, time: new Date()};
   }
   
   // Check current credentials for any transactions on current ledger.
   #isOnLedger = async () => {
     try {
       const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      this.#paymentsInfo.isOnLedger[currency] = false;
+      const imparter = this.#getCurrentImparter();
+      this.paymentsInfo.isOnLedger[imparter] = false;
       if (await oh$.isOnLedger(imparter)) {
-        this.#paymentsInfo.isOnLedger[currency] = true;
+        this.paymentsInfo.isOnLedger[imparter] = true;
       }
     } catch (error) {
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
+      throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
   // Sign a challenge with current credentials and set to the payments info.
   #sign = async () => {
     try {
-      const challenge = makePretendChallenge();
-      const imparter = this.#getImparter();
+      const challenge = this.makePretendChallenge();
+      const imparter = this.#getCurrentImparter();
       var signature = await oh$.sign(imparter, challenge);
       this.#setSignature(challenge, signature);
     } catch (error) {
       this.#setSignature(null, null);
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
+      throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
-  // Get imparter based on currently tracked info
-  #getImparter = () => {
-    const currency = this.#getCurrentCurrency();
-    const wallet = this.#paymentsInfo.wallet[currency];
-    switch (currency) {
-      case 'dollars':
-        return wallet ? 'ohledger-web3' : 'ohledger';
-      case 'ethers':
-        return 'eth-web3';
-      default:
-    }
-  }
-
-  // Set currency enabled status
-  // @param {string} currency - to set 
+  // Set imparter enabled status
+  // @param {Imparter} imparter - to set 
   // @para {bool} value - to set
-  #setCurrencyEnabled = (currency, value) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.enabled[currency] = value;
-    this.#updateApplicationStateFn(newInfo);
+  #setImparterEnabled = (imparter: Imparter, value: boolean) => {
+    this.paymentsInfo.enabled[imparter] = value;
+    this.#pingApplicationState();
   }
 
-  // Set signature
-  // @param {string} currency - to set 
-  // @param {string} walletKey - or null
-  #setWallet = (currency, walletKey) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.wallet[currency] = walletKey;
-    this.#updateApplicationStateFn(newInfo);
+  // Set wallet
+  // @param {Imparter} imparter - to set 
+  // @param {boolean} value - to set
+  #setWallet = (imparter: Imparter, value: boolean) => {
+    this.paymentsInfo.wallet[imparter] = value;
+    this.#pingApplicationState();
   }
 
   // Set signature
   // @param {string} messageToSign - message to sign
   // @param {string} payerSignature - signed message
-  #setSignature = (messageToSign, payerSignature) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.messageToSign = messageToSign;
-    newInfo.payerSignature = payerSignature;
-    this.#updateApplicationStateFn(newInfo);
+  #setSignature = (messageToSign: string | null, payerSignature: string | null) => {
+    messageToSign ? this.paymentsInfo.messageToSign = messageToSign : delete this.paymentsInfo.messageToSign;
+    payerSignature ? this.paymentsInfo.payerSignature = payerSignature : delete this.paymentsInfo.payerSignature;
+    this.#pingApplicationState();
   }
 
   // Set credentials
-  // @param {} currency - setting credentials for
-  // @param {} payerAddress - (out only) payer's public address as set by service
-  // @param {} payerPrivateKey - payer's private key (receipt code) iff not using wallet, null if using wallet
-  #setCredentials = async (currency, payerAddress, payerPrivateKey) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.payerAddress = payerAddress;
-    newInfo.payerPrivateKey = payerPrivateKey;
-    newInfo.messageToSign = null;
-    newInfo.payerSignature = null;    
-    await this.#authenticate(currency);
-    this.#updateApplicationStateFn(newInfo);
+  // @param {Imparter} imparter - to set 
+  // @param {string} payerAddress - (out only) payer's public address as set by service
+  // @param {string} payerPrivateKey - payer's private key (receipt code) iff not using wallet, null if using wallet
+  #setCredentials = async (imparter: Imparter, payerAddress: string, payerPrivateKey: string | null) => {
+    this.paymentsInfo.payerAddress = payerAddress;
+    payerPrivateKey ? this.paymentsInfo.payerPrivateKey = payerPrivateKey : delete this.paymentsInfo.payerPrivateKey;
+    delete this.paymentsInfo.messageToSign;
+    delete this.paymentsInfo.payerSignature;    
+    await this.#authenticate(imparter);
+    this.#pingApplicationState();
   }
 
   // Clear credentials and wallet if problem
-  #clear = (currency) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.enabled[currency] = false;
-    newInfo.wallet[currency] = null;
-    newInfo.payerAddress = null;
-    newInfo.payerPrivateKey = null;
-    newInfo.messageToSign = null;
-    newInfo.payerSignature = null;    
-    this.#updateApplicationStateFn(newInfo);
+  #clear = (imparter: Imparter) => {
+    this.paymentsInfo.enabled[imparter] = false;
+    delete this.paymentsInfo.wallet[imparter];
+    delete this.paymentsInfo.payerAddress;
+    delete this.paymentsInfo.payerPrivateKey;
+    delete this.paymentsInfo.messageToSign;
+    delete this.paymentsInfo.payerSignature;    
+    this.#pingApplicationState();
   }
 
   /**
@@ -406,7 +382,7 @@ export class OverhideHub extends FASTElement {
       if (result.status === 200) {
         return result.text();
       } else {
-        throw(JSON.stringify({url: url, status: result.status, error: result.message}));
+        throw(JSON.stringify({url: url, status: result.status, error: result.statusText}));
       }
     }).then(token => {
       return token;
@@ -424,31 +400,32 @@ export class OverhideHub extends FASTElement {
 
     // Determine if ethers should be enabled based on uri from wallet (versus admin)
     // Ethers only enabled if wallet, so do everything in 'onWalletChange'
-    oh$.addEventListener('onWalletChange', async (e) => {
+    oh$.addEventListener('onWalletChange', async (e: any) => {
       const network = await oh$.getNetwork(e.imparterTag);
       const credentials = await oh$.getCredentials(e.imparterTag);
-      switch (e.imparterTag) {
-        case 'eth-web3':
+      const imparter: Imparter = e.imparterTag;
+      switch (imparter) {
+        case Imparter.ethWeb3:
           if (e.isPresent) {
-            if (NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag] === network.name) {
-              this.#setCurrencyEnabled('ethers', true);
-              this.#setWallet('ethers', e.isPresent ? 'web3' : null);
-              await this.#setCredentials('ethers', credentials.address, null);
+            if (NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter] === network.name) {
+              this.#setImparterEnabled(imparter, true);
+              this.#setWallet(imparter, e.isPresent);
+              await this.#setCredentials(imparter, credentials.address, null);
             } else {
               // wrong network
-              this.#clear('ethers');
-              this.#setError(`Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen:${network.name})`);
+              this.#clear(imparter);
+              this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen:${network.name})`;
               return;
             }
           } else {
             // no wallet no ether payments
-            this.#clear('ethers');
+            this.#clear(imparter);
           }
           // dollars always available, ethers enabled when network detected below  
           break;
         case 'ohledger-web3':
-          this.#setWallet('dollars', e.isPresent ? 'web3' : null);
-          await this.#setCredentials('dollars', credentials.address, null);
+          this.#setWallet(imparter, e.isPresent);
+          await this.#setCredentials(imparter, credentials.address, null);
           console.log(`overhide-ledger wallet set for network ${network.currency}:${network.mode}`); // no network misconfigs for ohledger as explicitly set
           break;
         default:
@@ -457,48 +434,53 @@ export class OverhideHub extends FASTElement {
 
     // Determine if dollars should be enabled.  Since we enable dollars test network at end below, we know this will trigger..
     // No wallet for dollars in this example.
-    oh$.addEventListener('onNetworkChange', async (e) => {
-      switch (e.imparterTag) {
-        case 'eth-web3':
-          if (e && e.name && NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag] !== e.name) {
+    oh$.addEventListener('onNetworkChange', async (e: any) => {
+      const imparter: Imparter = e.imparterTag;
+      switch (imparter) {
+        case Imparter.ethWeb3:
+        case Imparter.btcManual:
+          if (e && e.name && NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter] !== e.name) {
             // wrong network
-            this.#clear('ethers');
-            this.#setError(`Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen:${e.name})`);
+            this.#clear(imparter);
+            this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen:${e.name})`;
             return;
           }
           break;
-        case 'ohledger':
-        case 'ohledger-web3':
+        case Imparter.ohledger:
+        case Imparter.ohledgerWeb3:
+        case Imparter.ohledgerSocial:
           if ('currency' in e
-              && 'mode' in e
-              && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]) {
-            this.#setCurrencyEnabled('dollars', true);
+            && 'mode' in e
+            && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]) {
+            this.#setImparterEnabled(imparter, true);
             break;
           }
           // wrong network
-          this.#clear('dollars');
-          this.#setError(`overhide-ledger network misconfig: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen: ${e.currency}:${e.mode})`);
+          this.#clear(imparter);
+          this.error = `overhide-ledger network misconfig: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen: ${e.currency}:${e.mode})`;
           return;
         default:
       }
     });
 
     // Update current payer
-    oh$.addEventListener('onCredentialsUpdate', async (e) => {
+    oh$.addEventListener('onCredentialsUpdate', async (e: any) => {
+      const imparter: Imparter = e.imparterTag;
       // don't update if wallet not set/unset:  perhaps network error above.
-      if (e.imparterTag === 'eth-web3' && !this.#paymentsInfo.wallet['ethers']) return;
-      if (e.imparterTag === 'ohledger-web3' && !this.#paymentsInfo.wallet['dollars']) return;      
+      if (imparter === Imparter.ethWeb3 && !this.paymentsInfo.wallet[imparter]) return;
+      if (imparter === Imparter.ohledgerWeb3 && !this.paymentsInfo.wallet[imparter]) return;      
 
-      await this.#setCredentials(e.imparterTag === 'eth-web3' ? 'ethers' : 'dollars', e.address, 'secret' in e ? e.secret : null);
+      await this.#setCredentials(imparter, e.address, 'secret' in e ? e.secret : null);
     });
 
-    oh$.addEventListener('onWalletChange', async (e) => {
+    oh$.addEventListener('onWalletChange', async (e: any) => {
       this.#outstandingCache = {};
       this.#pingApplicationState();
     });
 
     oh$.setNetwork('ohledger', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' }); 
     oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' });
+    oh$.setNetwork('ohledger-social', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' });
   }
 
   /**
@@ -508,423 +490,7 @@ export class OverhideHub extends FASTElement {
     return `please sign this challenge proving you own this address :: ${(new Date()).getTime() / 1000}`; // make pretend challenge
   }
   
-  /**  #paymentsInfo;
-
-  #updateApplicationStateFn;
-  #setError;
-  #allowNetworkType;
-
-  // @param {(info) => ()} updateApplicationStateFn - function called with updated payments object, see #paymentsInfo comment above.
-  // @param {(text) => ()} setErrorFn - fn to set error if any
-  // @param {string} defaultCurrency - default currency, one of 'dollars' or 'ethers'
-  // @param {bool} allowTestOnly - if only test networks should be allowed
-  constructor(updateApplicationStateFn, setErrorFn, defaultCurrency = 'dollars', allowTestOnly = true) {
-    if (!updateApplicationStateFn) throw new Error(`No 'updateApplicationStateFn provided.  Ensure your App.js has a 'LedgersWidgetPaymentsInfoContext.Provider' with a state value containing a 'updateApplicationStateFn' function of type (info) => ().`);
-    if (!setErrorFn) throw new Error(`No 'setErrorFn provided.  Ensure your App.js has a 'LedgersWidgetPaymentsInfoContext.Provider' with a state value containing a 'setErrorFn' function of type (text) => ().`);
-
-    this.#updateApplicationStateFn = updateApplicationStateFn;
-    this.#setError = setErrorFn;
-
-    this.#paymentsInfo = {};
-
-    this.#allowNetworkType = allowTestOnly ? 'test' : 'prod';
-    this.#init();
-  }
-
-  // Set current currency
-  // @param {string} currency - to set (allowed values: 'dollars' or 'ethers')
-  setCurrentCurrency = async (currency) => {
-    this.#outstandingCache = {}; // reset outstanding cache
-    let newInfo = this.#paymentsInfo;
-    newInfo.currentCurrency = currency;
-    if (!this.#isAuthenticated()) {
-      await this.#authenticate(currency);
-    }
-    this.#updateApplicationStateFn(newInfo);
-  }
-
-  // Sets credentials secret key for non-wallet workflow
-  // @param {string} new key - to set
-  setSecretKey = async (newKey) => {
-    try {
-      this.#setError(null);
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      if (!this.#paymentsInfo.wallet[currency]) {
-        await oh$.setCredentials(imparter, {secret: newKey});
-      }
-    } catch (error) {
-      this.#setError(`Paste or generate a key.`);
-    }
-  }
-
-  // Generates new PKI keys for non-wallet workflows.
-  // Updates paymentsInfo provided by service.
-  // No-op if current currency has a wallet set.
-  generateNewKeys = async () => {
-    try {
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      if (!this.#paymentsInfo.wallet[currency]) {
-        await oh$.generateCredentials(imparter,null);
-      }
-    } catch (error) {
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
-    }
-  }
-
-  #getInfo = () => {
-    return <Info>{
-      currency: this.#getCurrentCurrency(),
-      address: this.#paymentsInfo.payerAddress,
-      message: this.#paymentsInfo.messageToSign,
-      signature: this.#paymentsInfo.payerSignature,
-      ledgerUri: oh$.getOverhideRemunerationAPIUri()
-    };
-  }
-
-  // @returns {string} 'dollars' or 'ethers'.
-  #getCurrentCurrency = () => {
-    return this.#paymentsInfo.currentCurrency || this.#paymentsInfo.defaultCurrency;
-  }
-
-  // Is current crednetial authenticatd against the current currency's ledger? 
-  // @returns {bool} after checking signature and whether ledger has any transactions (to anyone)
-  #isAuthenticated = () => {
-    const currency = this.#getCurrentCurrency();
-    return this.#paymentsInfo.isOnLedger[currency];
-  }
-
-  #authenticate = async (currency) => {
-    if (currency !== this.#getCurrentCurrency()) return;
-    this.#outstandingCache = {}; // reset outstanding cache
-    if ((!this.#paymentsInfo.payerSignature 
-         || !this.#paymentsInfo.messageToSign)) {
-      await this.#sign();
-    }
-    await this.#isOnLedger()
-  }
-
-  // cache of outstanding results
-  #outstandingCache = {};
-
-  // Get balance outstanding for authorization as per current currency.
-  // @param {number} cost - amount expected to tally (in dollars or ethers)
-  // @param {string} to - address of recepient
-  // @param {number} minutes - number of minutes to look back (since) on the ledger
-  // @returns {number} differnce in dollars or ethers, $0 if authorized, null if not yet known.
-  #getOutstanding = (cost, to, tallyMinutes) => {
-    const currency = this.#getCurrentCurrency();
-    const key = `${currency}_${cost}_${to}_${tallyMinutes}`;
-    console.log(`#getOutstanding(${key}) = ${this.#outstandingCache[key]}`);
-    if (key in this.#outstandingCache) {
-      return this.#outstandingCache[key];
-    }
-    this.#outstandingCache[key] = null; // for re-requests
-    (async () => {
-      try {
-        const imparter = this.#getImparter();
-        let tally;
-        const creds = await oh$.getCredentials(imparter);
-        if (!creds || !creds.address) {
-          this.#outstandingCache[key] = cost;
-          this.#pingApplicationState();
-          return;
-        };
-        if (tallyMinutes) {
-          let since = new Date();
-          since.setMinutes(since.getMinutes() - tallyMinutes);
-          tally = await oh$.getTally(imparter, { address: to }, since);
-        } else {
-          tally = await oh$.getTally(imparter, { address: to }, null);
-        }
-        switch (currency) {
-          case 'dollars':
-            cost = cost * CENTS_IN_DOLLAR; // need cents
-            break;
-          case 'ethers':
-            cost = cost * WEI_IN_ETHER; // need wei
-            break;
-          default:
-        }      
-        var delta = cost - tally;
-        delta = delta < 0 ? 0 : delta;
-        switch (currency) {
-          case 'dollars':
-            this.#outstandingCache[key] = delta / CENTS_IN_DOLLAR; // need dollars
-            this.#pingApplicationState();
-            return;
-          case 'ethers':
-            this.#outstandingCache[key] = delta / WEI_IN_ETHER; // need cents
-            this.#pingApplicationState();
-            return;
-          default:
-        }      
-      } catch (error) {
-        this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
-      }  
-    })();
-    return null;
-  }
-
-  // Do the actual topup to authorize
-  // @param {number} amount - amount to topup (in dollars or ethers), can be 0 to just create a free transaction for getting on ledger
-  // @param {} toAddress - to pay
-  #topUp = async (amount, toAddress) => {
-    const currency = this.#getCurrentCurrency();
-    const wallet = this.#paymentsInfo.wallet[currency];
-    const imparter = this.#getImparter();
-    switch (currency) {
-      case 'dollars':
-        amount = amount * CENTS_IN_DOLLAR; // need cents
-        if (!wallet) {
-          await oh$.setCredentials(imparter, {secret: this.#paymentsInfo.payerPrivateKey});
-        }
-        break;
-      case 'ethers':
-        amount = amount * WEI_IN_ETHER; // need wei
-        break;
-      default:
-    }
-    try {
-      this.#paymentsInfo.pendingTransaction[currency] = amount;
-      let aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
-      let before = await oh$.getTally(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before
-      let options = this.#paymentsInfo.payerSignature && this.#paymentsInfo.messageToSign && {
-          message: this.#paymentsInfo.messageToSign, 
-          signature: this.#paymentsInfo.payerSignature
-        };
-      await oh$.createTransaction(imparter, amount, toAddress, options);
-      if (amount > 0) {
-        for (var i = 0; i < 12; i++) {
-          let now = await oh$.getTally(imparter, { address: toAddress }, aDayAgo); // ... we take a sample now
-          if (now > before) break;                                          // ... and exit out as soon as decentralized
-                                                                            //     ledger is consistent between the wallet's
-                                                                            //     node and ledgers.js node
-          await delay(5000);                                                // ... else wait 5 seconds
-        }  
-      }
-      this.#paymentsInfo.pendingTransaction[currency] = null;
-      this.#paymentsInfo.isOnLedger[currency] = true;      
-      this.#outstandingCache = {}; // reset outstanding cache
-      this.#pingApplicationState();
-    } catch (error) {
-      this.#paymentsInfo.pendingTransaction[currency] = null;
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
-    }
-  }
-
-  // Trigger redraw via application state update
-  #pingApplicationState = () => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.time = new Date();
-    this.#updateApplicationStateFn(newInfo);
-  }
-  
-  // Check current credentials for any transactions on current ledger.
-  #isOnLedger = async () => {
-    try {
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getImparter();
-      this.#paymentsInfo.isOnLedger[currency] = false;
-      if (await oh$.isOnLedger(imparter)) {
-        this.#paymentsInfo.isOnLedger[currency] = true;
-      }
-    } catch (error) {
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
-    }
-  }
-
-  // Sign a challenge with current credentials and set to the payments info.
-  #sign = async () => {
-    try {
-      const challenge = makePretendChallenge();
-      const imparter = this.#getImparter();
-      var signature = await oh$.sign(imparter, challenge);
-      this.#setSignature(challenge, signature);
-    } catch (error) {
-      this.#setSignature(null, null);
-      this.#setError(`${typeof error === 'object' && 'message' in error ? error.message : error}`);
-    }
-  }
-
-  // Get imparter based on currently tracked info
-  #getImparter = () => {
-    const currency = this.#getCurrentCurrency();
-    const wallet = this.#paymentsInfo.wallet[currency];
-    switch (currency) {
-      case 'dollars':
-        return wallet ? 'ohledger-web3' : 'ohledger';
-      case 'ethers':
-        return 'eth-web3';
-      default:
-    }
-  }
-
-  // Set currency enabled status
-  // @param {string} currency - to set 
-  // @para {bool} value - to set
-  #setCurrencyEnabled = (currency, value) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.enabled[currency] = value;
-    this.#updateApplicationStateFn(newInfo);
-  }
-
-  // Set signature
-  // @param {string} currency - to set 
-  // @param {string} walletKey - or null
-  #setWallet = (currency, walletKey) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.wallet[currency] = walletKey;
-    this.#updateApplicationStateFn(newInfo);
-  }
-
-  // Set signature
-  // @param {string} messageToSign - message to sign
-  // @param {string} payerSignature - signed message
-  #setSignature = (messageToSign, payerSignature) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.messageToSign = messageToSign;
-    newInfo.payerSignature = payerSignature;
-    this.#updateApplicationStateFn(newInfo);
-  }
-
-  // Set credentials
-  // @param {} currency - setting credentials for
-  // @param {} payerAddress - (out only) payer's public address as set by service
-  // @param {} payerPrivateKey - payer's private key (receipt code) iff not using wallet, null if using wallet
-  #setCredentials = async (currency, payerAddress, payerPrivateKey) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.payerAddress = payerAddress;
-    newInfo.payerPrivateKey = payerPrivateKey;
-    newInfo.messageToSign = null;
-    newInfo.payerSignature = null;    
-    await this.#authenticate(currency);
-    this.#updateApplicationStateFn(newInfo);
-  }
-
-  // Clear credentials and wallet if problem
-  #clear = (currency) => {
-    let newInfo = this.#paymentsInfo;
-    newInfo.enabled[currency] = false;
-    newInfo.wallet[currency] = null;
-    newInfo.payerAddress = null;
-    newInfo.payerPrivateKey = null;
-    newInfo.messageToSign = null;
-    newInfo.payerSignature = null;    
-    this.#updateApplicationStateFn(newInfo);
-  }
-
   /**
-   * Retrieve API access token
-   * 
-   * @returns {string} the token.
-   */
-  #getToken = async () => {
-    const tokenUrl = `https://token.overhide.io/token`;
-    const apiKey = '0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___';
-    const url = `${tokenUrl}?apikey=${apiKey}`;
-
-    return fetch(url, {
-      method: 'GET'
-    }).then(result => {
-      if (result.status === 200) {
-        return result.text();
-      } else {
-        throw(JSON.stringify({url: url, status: result.status, error: result.message}));
-      }
-    }).then(token => {
-      return token;
-    }).catch(e => {
-    });
-  }
-
-  // Initialize oh$ listeners.
-  #init = () => {
-
-    // Ensure oh$ has a token.
-    (async () => {
-      oh$.enable(await this.#getToken());
-    })();
-
-    // Determine if ethers should be enabled based on uri from wallet (versus admin)
-    // Ethers only enabled if wallet, so do everything in 'onWalletChange'
-    oh$.addEventListener('onWalletChange', async (e) => {
-      const network = await oh$.getNetwork(e.imparterTag);
-      const credentials = await oh$.getCredentials(e.imparterTag);
-      switch (e.imparterTag) {
-        case 'eth-web3':
-          if (e.isPresent) {
-            if (NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag] === network.name) {
-              this.#setCurrencyEnabled('ethers', true);
-              this.#setWallet('ethers', e.isPresent ? 'web3' : null);
-              await this.#setCredentials('ethers', credentials.address, null);
-            } else {
-              // wrong network
-              this.#clear('ethers');
-              this.#setError(`Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen:${network.name})`);
-              return;
-            }
-          } else {
-            // no wallet no ether payments
-            this.#clear('ethers');
-          }
-          // dollars always available, ethers enabled when network detected below  
-          break;
-        case 'ohledger-web3':
-          this.#setWallet('dollars', e.isPresent ? 'web3' : null);
-          await this.#setCredentials('dollars', credentials.address, null);
-          console.log(`overhide-ledger wallet set for network ${network.currency}:${network.mode}`); // no network misconfigs for ohledger as explicitly set
-          break;
-        default:
-      }
-    });
-
-    // Determine if dollars should be enabled.  Since we enable dollars test network at end below, we know this will trigger..
-    // No wallet for dollars in this example.
-    oh$.addEventListener('onNetworkChange', async (e) => {
-      switch (e.imparterTag) {
-        case 'eth-web3':
-          if (e && e.name && NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag] !== e.name) {
-            // wrong network
-            this.#clear('ethers');
-            this.#setError(`Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen:${e.name})`);
-            return;
-          }
-          break;
-        case 'ohledger':
-        case 'ohledger-web3':
-          if ('currency' in e
-              && 'mode' in e
-              && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]) {
-            this.#setCurrencyEnabled('dollars', true);
-            break;
-          }
-          // wrong network
-          this.#clear('dollars');
-          this.#setError(`overhide-ledger network misconfig: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][e.imparterTag]}) (seen: ${e.currency}:${e.mode})`);
-          return;
-        default:
-      }
-    });
-
-    // Update current payer
-    oh$.addEventListener('onCredentialsUpdate', async (e) => {
-      // don't update if wallet not set/unset:  perhaps network error above.
-      if (e.imparterTag === 'eth-web3' && !this.#paymentsInfo.wallet['ethers']) return;
-      if (e.imparterTag === 'ohledger-web3' && !this.#paymentsInfo.wallet['dollars']) return;      
-
-      await this.#setCredentials(e.imparterTag === 'eth-web3' ? 'ethers' : 'dollars', e.address, 'secret' in e ? e.secret : null);
-    });
-
-    oh$.addEventListener('onWalletChange', async (e) => {
-      this.#outstandingCache = {};
-      this.#pingApplicationState();
-    });
-
-    oh$.setNetwork('ohledger', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' }); 
-    oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' });
-  }
    * @param {number} t - millis to delay
    * @returns {Promise} completing when delay is done
    */
