@@ -21,7 +21,7 @@ module.exports = function(env, { mode }) {
       writeToDisk: true,
       open: !process.env.CI,
       lazy: false,
-      contentBase: [__dirname, path.join(__dirname, 'demo-front-end')]
+      contentBase: [__dirname, path.join(__dirname, 'demo-front-end'), path.join(__dirname, 'src')]
     },
     module: {
       rules: [

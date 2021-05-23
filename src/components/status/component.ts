@@ -4,16 +4,16 @@ import {
   html,
   css,
   attr,
-  observable,
   Observable
 } from "@microsoft/fast-element";
 
-import { ComplexInterface } from '../../my-try';
+import {
+  PaymentsInfo
+} from '../hub/definitions';
 
 import w3Css from "../../static/w3.css";
 
 const template = html<OverhideStatus>`
-
 `;
 
 const styles = css`
@@ -27,27 +27,51 @@ ${w3Css}
   styles,
 })
 export class OverhideStatus extends FASTElement {
-  @attr hubId: string = 'demo-hub';
+  @attr 
+  hubId?: string;
 
-  constructor() {
+  public constructor() {
     super(); 
+  }
 
-    const el = document.querySelector(`#${this.hubId}`);
-    if (el) {
-      const notifier = Observable.getNotifier(el);
-      const handler = {
-        handleChange(source: any, propertyName: string) {
-          if (propertyName == 'obj') {
-            console.log(`OverhideStats :: ${JSON.stringify(source.obj)}`);
-          }
-        }
+  public setHub(hub: any) {
+    const notifier = Observable.getNotifier(hub);
+    const that = this;
+    const handler = {
+      handleChange(source: any, propertyName: string) {
+        switch (propertyName) {
+          case 'paymentsInfo':
+            that.paymentInfoChanged(source.paymentsInfo);
+            break;
+          case 'error':
+            that.errorSet(source.error);
+            break;
+        } 
       }
-
-      notifier.subscribe(handler, 'obj')
     }
+
+    notifier.subscribe(handler, 'paymentsInfo')
+    notifier.subscribe(handler, 'error')
+  }
+
+  hubIdChanged(oldValue: string, newValue: string) {
+    const el = document.querySelector(`#${this.hubId}`);
+    if (!el) {
+      console.log(`WARNING: overhide-status configured for overhide-hub with ID ${newValue} but no element in DOM with this ID.`);
+      return;
+    }
+    this.setHub(el);
   }
 
   connectedCallback() {
     super.connectedCallback();
-  };   
+  };
+
+  paymentInfoChanged(info: PaymentsInfo): void {
+    console.log(`paymentInfoChanged :: ${JSON.stringify(info)}`);
+  }
+
+  errorSet(error: string): void {
+    console.log(`ERROR (overhide-status) :: ${status}`);
+  }
 }

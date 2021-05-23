@@ -17,8 +17,8 @@ import {
 } from './definitions';
 
 import oh$ from "ledgers.js";
-import w3Css from "./static/w3.css";
-import someIcon from "./static/icons/oh-ledger-coin.svg";
+import w3Css from "../../static/w3.css";
+import someIcon from "../../static/icons/oh-ledger-coin.svg";
 
 const template = html<OverhideHub>`
 <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato" />
@@ -39,15 +39,21 @@ const styles = css`
 ${w3Css}
 `;
 
+interface CtorNamedParams {
+  isTest?: boolean
+}
 @customElement({
   name: "overhide-hub",
   template,
   styles,
 })
 export class OverhideHub extends FASTElement {
+  @attr 
+  public isTest?: boolean | null;
 
   // payments object
-  @observable paymentsInfo: PaymentsInfo = {
+  @observable 
+  public paymentsInfo: PaymentsInfo = {
     currentCurrency: Currency.dollars,
     currentImparter: Imparter.ohledger,
     defaultCurrency: Currency.dollars,
@@ -97,40 +103,46 @@ export class OverhideHub extends FASTElement {
   };
   
   // set error if any
-  @observable error: string | null = null;
+  @observable 
+  public error?: string | null;
+
+  private allowNetworkType: NetworkType = NetworkType.prod;
+
+  // cache of outstanding results
+  private outstandingCache: {[key: string]: number} = {};
 
   connectedCallback() {
     super.connectedCallback();
     console.log('my-header is now connected to the DOM');
   };
 
-  #allowNetworkType: NetworkType;
-
-  constructor(private isTest: boolean = true) {
+  public constructor({isTest}: CtorNamedParams = {}) {
     super();
-    this.#allowNetworkType = isTest ? NetworkType.test : NetworkType.prod;
-    this.#init();
+    this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
+    if (isTest) {
+      this.isTestChanged(false, isTest);
+    }
   }
 
   // @param {string} error -- the error string to set
-  setError = (error: string) => {
+  public setError = (error: string) => {
     this.error = error;
   }
 
   // Set current imparter and authenticates
   // @param {Imparter} imparter - to set
-  setCurrentImparter = async (imparter: Imparter) => {
+  public setCurrentImparter = async (imparter: Imparter) => {
     const oldInfo = {...this.paymentsInfo};
     try {
-      this.#outstandingCache = {}; // reset outstanding cache
+      this.outstandingCache = {}; // reset outstanding cache
       this.paymentsInfo.currentImparter = imparter;
       this.paymentsInfo.currentCurrency = CURRENCY_BY_IMPARTER[imparter];
       this.paymentsInfo.ledgerUri = imparter === Imparter.unknown ? undefined : oh$.getOverhideRemunerationAPIUri();
 
-      if (imparter !== Imparter.unknown && !this.#isAuthenticated()) {
-        await this.#authenticate(imparter);
+      if (imparter !== Imparter.unknown && !this.isAuthenticated()) {
+        await this.authenticate(imparter);
       }
-      this.#pingApplicationState();
+      this.pingApplicationState();
     }
     catch (e) 
     {
@@ -141,10 +153,10 @@ export class OverhideHub extends FASTElement {
 
   // Sets credentials secret key for non-wallet workflow
   // @param {string} new key - to set
-  setSecretKey = async (newKey: string) => {
+  public setSecretKey = async (newKey: string) => {
     const oldInfo = {...this.paymentsInfo};
     try {
-      const imparter = this.#getCurrentImparter();
+      const imparter = this.getCurrentImparter();
       if (imparter === Imparter.unknown) this.error = 'cannot set secret, imparter not set';
       if (!this.paymentsInfo.wallet[imparter]) {
         await oh$.setCredentials(imparter, {secret: newKey});
@@ -158,10 +170,10 @@ export class OverhideHub extends FASTElement {
   // Generates new PKI keys for non-wallet workflows.
   // Updates paymentsInfo provided by service.
   // No-op if current currency has a wallet set.
-  generateNewKeys = async () => {
+  public generateNewKeys = async () => {
     const oldInfo = {...this.paymentsInfo};
     try {
-      const imparter = this.#getCurrentImparter();
+      const imparter = this.getCurrentImparter();
       if (imparter === Imparter.unknown) this.error = 'cannot generate new key, imparter not set';
       if (!this.paymentsInfo.wallet[imparter]) {
         await oh$.generateCredentials(imparter,null);
@@ -172,59 +184,29 @@ export class OverhideHub extends FASTElement {
     }
   }
 
-  // @returns {Currency} 
-  #getCurrentCurrency = () => {
-    return this.paymentsInfo.currentCurrency || this.paymentsInfo.defaultCurrency;
-  }  
-
-  // @returns {Imparter} 
-  #getCurrentImparter = () => {
-    return this.paymentsInfo.currentImparter || this.paymentsInfo.defaultImparter;
-  }
-
-  // Is current crednetial authenticatd against the current currency's ledger? 
-  // @returns {bool} after checking signature and whether ledger has any transactions (to anyone)
-  #isAuthenticated = () => {
-    const imparter = this.#getCurrentImparter();
-    return this.paymentsInfo.isOnLedger[imparter];
-  }
-
-  #authenticate = async (imparter: Imparter) => {
-    if (imparter !== this.#getCurrentImparter()) throw `imparter mismatch in #authenticate`;
-    this.#outstandingCache = {}; // reset outstanding cache
-    if ((!this.paymentsInfo.payerSignature 
-          || !this.paymentsInfo.messageToSign)) {
-      await this.#sign();
-    }
-    await this.#isOnLedger()  
-  }
-
-  // cache of outstanding results
-  #outstandingCache: {[key: string]: number} = {};
-
   // Get balance outstanding for authorization as per current currency.
   // @param {number} costInDollars - amount expected to tally (in dollars or ethers)
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
   // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
-  getOutstanding = (costInDollars: number, to: string, tallyMinutes: number): number | null => {
-    const currency = this.#getCurrentCurrency();
-    const imparter = this.#getCurrentImparter();
+  public getOutstanding = (costInDollars: number, to: string, tallyMinutes: number): number | null => {
+    const currency = this.getCurrentCurrency();
+    const imparter = this.getCurrentImparter();
     if (currency === Currency.unknown || imparter === Imparter.unknown) throw `unknown current currency/imparter in getOutstanding`;
     const key = `${imparter}_${costInDollars}_${to}_${tallyMinutes}`;
-    console.log(`#getOutstanding(${key}) = ${this.#outstandingCache[key]}`);
-    if (key in this.#outstandingCache) {
-      return this.#outstandingCache[key];
+    console.log(`#getOutstanding(${key}) = ${this.outstandingCache[key]}`);
+    if (key in this.outstandingCache) {
+      return this.outstandingCache[key];
     }
-    delete this.#outstandingCache[key]; // for re-requests
+    delete this.outstandingCache[key]; // for re-requests
     (async () => {
       const oldInfo = {...this.paymentsInfo};
       try {
         let tally;
         const creds = await oh$.getCredentials(imparter);
         if (!creds || !creds.address) {
-          this.#outstandingCache[key] = costInDollars;
-          this.#pingApplicationState();
+          this.outstandingCache[key] = costInDollars;
+          this.pingApplicationState();
           return;
         };
         if (tallyMinutes) {
@@ -237,8 +219,8 @@ export class OverhideHub extends FASTElement {
         
         var delta = costInDollars - tally;
         delta = delta < 0 ? 0 : delta;
-        this.#outstandingCache[key] = delta;
-        this.#pingApplicationState();
+        this.outstandingCache[key] = delta;
+        this.pingApplicationState();
       } catch (error) {
         this.paymentsInfo = {...oldInfo};
         this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
@@ -250,9 +232,9 @@ export class OverhideHub extends FASTElement {
   // Do the actual topup to authorize
   // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger
   // @param {} toAddress - to pay
-  topUp = async (amountDollars: number, toAddress: string) => {
-    const currency = this.#getCurrentCurrency();
-    const imparter = this.#getCurrentImparter();
+ public topUp = async (amountDollars: number, toAddress: string) => {
+    const currency = this.getCurrentCurrency();
+    const imparter = this.getCurrentImparter();
     const oldInfo = {...this.paymentsInfo};
     try {
       const wallet = this.paymentsInfo.wallet[imparter];
@@ -276,8 +258,8 @@ export class OverhideHub extends FASTElement {
       }
       this.paymentsInfo.pendingTransaction[imparter] = false;
       this.paymentsInfo.isOnLedger[imparter] = true;      
-      this.#outstandingCache = {}; // reset outstanding cache
-      this.#pingApplicationState();
+      this.outstandingCache = {}; // reset outstanding cache
+      this.pingApplicationState();
     } catch (error) {
       this.paymentsInfo = {...oldInfo};
       this.paymentsInfo.pendingTransaction[imparter] = false;
@@ -285,16 +267,48 @@ export class OverhideHub extends FASTElement {
     }
   }
 
+  private isTestChanged(oldValue: boolean, newValue: boolean) {
+    this.allowNetworkType = newValue ? NetworkType.test : NetworkType.prod;
+    this.init();
+  }
+
+  // @returns {Currency} 
+  private getCurrentCurrency = () => {
+    return this.paymentsInfo.currentCurrency || this.paymentsInfo.defaultCurrency;
+  }  
+
+  // @returns {Imparter} 
+  private getCurrentImparter = () => {
+    return this.paymentsInfo.currentImparter || this.paymentsInfo.defaultImparter;
+  }
+
+  // Is current crednetial authenticatd against the current currency's ledger? 
+  // @returns {bool} after checking signature and whether ledger has any transactions (to anyone)
+  private isAuthenticated = () => {
+    const imparter = this.getCurrentImparter();
+    return this.paymentsInfo.isOnLedger[imparter];
+  }
+
+  private authenticate = async (imparter: Imparter) => {
+    if (imparter !== this.getCurrentImparter()) return;
+    this.outstandingCache = {}; // reset outstanding cache
+    if ((!this.paymentsInfo.payerSignature 
+          || !this.paymentsInfo.messageToSign)) {
+      await this.sign();
+    }
+    await this.isOnLedger()  
+  }
+
   // Trigger redraw via application state update
-  #pingApplicationState = () => {
+  private pingApplicationState = () => {
     this.paymentsInfo = {...this.paymentsInfo, time: new Date()};
   }
   
   // Check current credentials for any transactions on current ledger.
-  #isOnLedger = async () => {
+  private isOnLedger = async () => {
     try {
-      const currency = this.#getCurrentCurrency();
-      const imparter = this.#getCurrentImparter();
+      const currency = this.getCurrentCurrency();
+      const imparter = this.getCurrentImparter();
       this.paymentsInfo.isOnLedger[imparter] = false;
       if (await oh$.isOnLedger(imparter)) {
         this.paymentsInfo.isOnLedger[imparter] = true;
@@ -305,14 +319,14 @@ export class OverhideHub extends FASTElement {
   }
 
   // Sign a challenge with current credentials and set to the payments info.
-  #sign = async () => {
+  private sign = async () => {
     try {
       const challenge = this.makePretendChallenge();
-      const imparter = this.#getCurrentImparter();
+      const imparter = this.getCurrentImparter();
       var signature = await oh$.sign(imparter, challenge);
-      this.#setSignature(challenge, signature);
+      this.setSignature(challenge, signature);
     } catch (error) {
-      this.#setSignature(null, null);
+      this.setSignature(null, null);
       throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
   }
@@ -320,50 +334,50 @@ export class OverhideHub extends FASTElement {
   // Set imparter enabled status
   // @param {Imparter} imparter - to set 
   // @para {bool} value - to set
-  #setImparterEnabled = (imparter: Imparter, value: boolean) => {
+  private setImparterEnabled = (imparter: Imparter, value: boolean) => {
     this.paymentsInfo.enabled[imparter] = value;
-    this.#pingApplicationState();
+    this.pingApplicationState();
   }
 
   // Set wallet
   // @param {Imparter} imparter - to set 
   // @param {boolean} value - to set
-  #setWallet = (imparter: Imparter, value: boolean) => {
+  private setWallet = (imparter: Imparter, value: boolean) => {
     this.paymentsInfo.wallet[imparter] = value;
-    this.#pingApplicationState();
+    this.pingApplicationState();
   }
 
   // Set signature
   // @param {string} messageToSign - message to sign
   // @param {string} payerSignature - signed message
-  #setSignature = (messageToSign: string | null, payerSignature: string | null) => {
+  private setSignature = (messageToSign: string | null, payerSignature: string | null) => {
     messageToSign ? this.paymentsInfo.messageToSign = messageToSign : delete this.paymentsInfo.messageToSign;
     payerSignature ? this.paymentsInfo.payerSignature = payerSignature : delete this.paymentsInfo.payerSignature;
-    this.#pingApplicationState();
+    this.pingApplicationState();
   }
 
   // Set credentials
   // @param {Imparter} imparter - to set 
   // @param {string} payerAddress - (out only) payer's public address as set by service
   // @param {string} payerPrivateKey - payer's private key (receipt code) iff not using wallet, null if using wallet
-  #setCredentials = async (imparter: Imparter, payerAddress: string, payerPrivateKey: string | null) => {
+  private setCredentials = async (imparter: Imparter, payerAddress: string, payerPrivateKey: string | null) => {
     this.paymentsInfo.payerAddress = payerAddress;
     payerPrivateKey ? this.paymentsInfo.payerPrivateKey = payerPrivateKey : delete this.paymentsInfo.payerPrivateKey;
     delete this.paymentsInfo.messageToSign;
     delete this.paymentsInfo.payerSignature;    
-    await this.#authenticate(imparter);
-    this.#pingApplicationState();
+    await this.authenticate(imparter);
+    this.pingApplicationState();
   }
 
   // Clear credentials and wallet if problem
-  #clear = (imparter: Imparter) => {
+  private clear = (imparter: Imparter) => {
     this.paymentsInfo.enabled[imparter] = false;
     delete this.paymentsInfo.wallet[imparter];
     delete this.paymentsInfo.payerAddress;
     delete this.paymentsInfo.payerPrivateKey;
     delete this.paymentsInfo.messageToSign;
     delete this.paymentsInfo.payerSignature;    
-    this.#pingApplicationState();
+    this.pingApplicationState();
   }
 
   /**
@@ -371,7 +385,7 @@ export class OverhideHub extends FASTElement {
    * 
    * @returns {string} the token.
    */
-  #getToken = async () => {
+  private getToken = async () => {
     const tokenUrl = `https://token.overhide.io/token`;
     const apiKey = '0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___';
     const url = `${tokenUrl}?apikey=${apiKey}`;
@@ -391,11 +405,11 @@ export class OverhideHub extends FASTElement {
   }
 
   // Initialize oh$ listeners.
-  #init = () => {
+  private init = () => {
 
     // Ensure oh$ has a token.
     (async () => {
-      oh$.enable(await this.#getToken());
+      oh$.enable(await this.getToken());
     })();
 
     // Determine if ethers should be enabled based on uri from wallet (versus admin)
@@ -407,25 +421,25 @@ export class OverhideHub extends FASTElement {
       switch (imparter) {
         case Imparter.ethWeb3:
           if (e.isPresent) {
-            if (NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter] === network.name) {
-              this.#setImparterEnabled(imparter, true);
-              this.#setWallet(imparter, e.isPresent);
-              await this.#setCredentials(imparter, credentials.address, null);
+            if (NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter] === network.name) {
+              this.setImparterEnabled(imparter, true);
+              this.setWallet(imparter, e.isPresent);
+              await this.setCredentials(imparter, credentials.address, null);
             } else {
               // wrong network
-              this.#clear(imparter);
-              this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen:${network.name})`;
+              this.clear(imparter);
+              this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]}) (seen:${network.name})`;
               return;
             }
           } else {
             // no wallet no ether payments
-            this.#clear(imparter);
+            this.clear(imparter);
           }
           // dollars always available, ethers enabled when network detected below  
           break;
         case 'ohledger-web3':
-          this.#setWallet(imparter, e.isPresent);
-          await this.#setCredentials(imparter, credentials.address, null);
+          this.setWallet(imparter, e.isPresent);
+          await this.setCredentials(imparter, credentials.address, null);
           console.log(`overhide-ledger wallet set for network ${network.currency}:${network.mode}`); // no network misconfigs for ohledger as explicitly set
           break;
         default:
@@ -439,10 +453,10 @@ export class OverhideHub extends FASTElement {
       switch (imparter) {
         case Imparter.ethWeb3:
         case Imparter.btcManual:
-          if (e && e.name && NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter] !== e.name) {
+          if (e && e.name && NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter] !== e.name) {
             // wrong network
-            this.#clear(imparter);
-            this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen:${e.name})`;
+            this.clear(imparter);
+            this.error = `Network misconfiguration: (expected:${NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]}) (seen:${e.name})`;
             return;
           }
           break;
@@ -451,13 +465,13 @@ export class OverhideHub extends FASTElement {
         case Imparter.ohledgerSocial:
           if ('currency' in e
             && 'mode' in e
-            && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]) {
-            this.#setImparterEnabled(imparter, true);
+            && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]) {
+            this.setImparterEnabled(imparter, true);
             break;
           }
           // wrong network
-          this.#clear(imparter);
-          this.error = `overhide-ledger network misconfig: (expected:${NETWORKS_BY_IMPARTER[this.#allowNetworkType][imparter]}) (seen: ${e.currency}:${e.mode})`;
+          this.clear(imparter);
+          this.error = `overhide-ledger network misconfig: (expected:${NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]}) (seen: ${e.currency}:${e.mode})`;
           return;
         default:
       }
@@ -470,17 +484,17 @@ export class OverhideHub extends FASTElement {
       if (imparter === Imparter.ethWeb3 && !this.paymentsInfo.wallet[imparter]) return;
       if (imparter === Imparter.ohledgerWeb3 && !this.paymentsInfo.wallet[imparter]) return;      
 
-      await this.#setCredentials(imparter, e.address, 'secret' in e ? e.secret : null);
+      await this.setCredentials(imparter, e.address, 'secret' in e ? e.secret : null);
     });
 
     oh$.addEventListener('onWalletChange', async (e: any) => {
-      this.#outstandingCache = {};
-      this.#pingApplicationState();
+      this.outstandingCache = {};
+      this.pingApplicationState();
     });
 
-    oh$.setNetwork('ohledger', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' }); 
-    oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' });
-    oh$.setNetwork('ohledger-social', { currency: 'USD', mode: this.#allowNetworkType ? 'test' : 'prod' });
+    oh$.setNetwork('ohledger', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' }); 
+    oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' });
+    oh$.setNetwork('ohledger-social', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' });
   }
 
   /**

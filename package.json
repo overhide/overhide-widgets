@@ -15,7 +15,7 @@
   "dependencies": {
     "@microsoft/fast-element": "latest",
     "@microsoft/fast-foundation": "latest",
-    "ledgers.js": "4.4.6",
+    "ledgers.js": "4.5.0",
     "lodash-es": "4.17.15",
     "tslib": "^1.11.1"
   },
