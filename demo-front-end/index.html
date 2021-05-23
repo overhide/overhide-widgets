@@ -2,12 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="/dist/bundle.js"></script>
   </head>
   <body>
     <div id="overhide-widgets-demo">
+
       <overhide-hub id="demo-hub" isTest=true></overhide-hub>
       <overhide-status hubId="demo-hub"></overhide-status>
+      <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
+
+      <div class="w3-row w3-padding-64"><div class="w3-col s12 w3-center">
+        <button onclick="document.getElementById('login-widget').style.display='block'" 
+                class="w3-button w3-black">
+                Login
+        </button>
+      </div></div>
+
     </div>
   </body>
 </html>
