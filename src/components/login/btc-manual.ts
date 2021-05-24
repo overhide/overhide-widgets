@@ -17,19 +17,20 @@ import {
 import w3Css from "../../static/w3.css";
 import infoIcon from "../../static/icons/info.svg";
 import clipboardIcon from "../../static/icons/clipboard.svg";
+import bitcoinIcon from "../../static/icons/bitcoin.svg";
 
-const template = html<OverhideOhledger>`
+const template = html<OverhideBtcManual>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name">passphrase login</span>
+        <span class="name svg">${bitcoinIcon} bitcoin login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
-        <span class="currency w3-text-dark-grey">dollars</span>
+        <span class="currency w3-text-dark-grey">bitcoins</span>
         <span class="info svg w3-tooltip">
           ${infoIcon}
           <span class="right-tooltip w3-text w3-tag w3-round-xlarge">
-            for any in-app purchases, payments would be in US dollars
+            for any in-app purchases, payments would be in bitcoins (satoshis)
           </span>
         </span>
       </div>
@@ -40,21 +41,9 @@ const template = html<OverhideOhledger>`
           <div class="input">
             <div class="clipboard">
               <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isKeyValid}">${clipboardIcon}</div>
-              <input autocomplete="passphrase" name="passphrase" id="passphrase" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
+              <input autocomplete="account" name="account" id="account" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
             </div>
-            <label>passphrase</label>
-          </div>
-        </div>
-      </div>
-      <div class="w3-row w3-margin">
-        <div class="w3-col s6">
-          <div class="input">
-            <input class="w3-button w3-blue" type="button" @click="${e => e.generate()}" value="generate new">
-          </div>
-        </div>
-        <div class="w3-col s6">
-          <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.isKeyValid}">
+            <label>bitcoin address</label>
           </div>
         </div>
       </div>
@@ -189,11 +178,11 @@ const styles = css`
 
 
 @customElement({
-  name: "overhide-ohledger",
+  name: "overhide-btc-manual",
   template,
   styles,
 })
-export class OverhideOhledger extends FASTElement {
+export class OverhideBtcManual extends FASTElement {
   @attr 
   hubId?: string;
 
@@ -249,16 +238,16 @@ export class OverhideOhledger extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.key = info.payerPrivateKey[Imparter.ohledger];
-    this.address = info.payerAddress[Imparter.ohledger];
-    this.isActive = info.currentImparter === Imparter.ohledger;
+    this.key = info.payerPrivateKey[Imparter.btcManual];
+    this.address = info.payerAddress[Imparter.btcManual];
+    this.isActive = info.currentImparter === Imparter.btcManual;
   }
 
   async changeKey(event: any) {
     this.key = event.target.value;
     this.setNormalMessage();
     if (this.hub && this.key) {
-      this.isKeyValid = (/^0x[0-9a-fA-F]{64}$/.test(this.key)) && await this.hub.setSecretKey(Imparter.ohledger, this.key);
+      this.isKeyValid = (/^0x[0-9a-fA-F]{64}$/.test(this.key)) && await this.hub.setSecretKey(Imparter.btcManual, this.key);
       if (!this.isKeyValid) {
         this.setInvalidMessage();
       }
@@ -268,7 +257,7 @@ export class OverhideOhledger extends FASTElement {
   async generate() {
     this.setNormalMessage();
     if (this.hub) {
-      await this.hub.generateNewKeys(Imparter.ohledger);
+      await this.hub.generateNewKeys(Imparter.btcManual);
       this.isKeyValid = true;
     }
   }
@@ -298,7 +287,7 @@ export class OverhideOhledger extends FASTElement {
 
   showTransactions() {
     if (this.hub && this.key && this.isKeyValid && this.address) {
-      window.open(`${this.hub.getUrl(Imparter.ohledger)}/ledger.html?address=${this.address}`,
+      window.open(`${this.hub.getUrl(Imparter.btcManual)}/ledger.html?address=${this.address}`,
         'targetWindow',
         'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300')
     }
@@ -306,7 +295,7 @@ export class OverhideOhledger extends FASTElement {
 
   async continue() {
     if (this.hub && this.key && this.isKeyValid && this.address) {
-      await this.hub.setCurrentImparter(Imparter.ohledger);
+      await this.hub.setCurrentImparter(Imparter.btcManual);
       this.$emit('close');
     }
   }
