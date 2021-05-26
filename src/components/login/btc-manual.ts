@@ -40,8 +40,8 @@ const template = html<OverhideBtcManual>`
         <div class="w3-col s12">
           <div class="input">
             <div class="clipboard">
-              <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isKeyValid}">${clipboardIcon}</div>
-              <input autocomplete="account" name="account" id="account" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
+              <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isAddressValid}">${clipboardIcon}</div>
+              <input autocomplete="account" name="account" id="account" class="w3-input" type="text" :value="${e => e.address}" @change="${(e,c) => e.changeAddress(c.event)}" @keyup="${(e,c) => e.changeAddress(c.event)}">
             </div>
             <label>bitcoin address</label>
           </div>
@@ -57,7 +57,7 @@ const template = html<OverhideBtcManual>`
       <div class="w3-row w3-margin">
         <div class="w3-col s12">
           <div class="input">
-            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isKeyValid}">
+            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isAddressValid}">
           </div>
         </div>
       </div>    
@@ -187,13 +187,10 @@ export class OverhideBtcManual extends FASTElement {
   hubId?: string;
 
   @observable
-  key?: string | null;
-
-  @observable
   address?: string | null;
 
   @observable
-  isKeyValid: boolean = false;
+  isAddressValid: boolean = false;
 
   @observable
   isActive: boolean = false;
@@ -238,44 +235,36 @@ export class OverhideBtcManual extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.key = info.payerPrivateKey[Imparter.btcManual];
     this.address = info.payerAddress[Imparter.btcManual];
     this.isActive = info.currentImparter === Imparter.btcManual;
   }
 
-  async changeKey(event: any) {
-    this.key = event.target.value;
+  async changeAddress(event: any) {
+    this.address = event.target.value;
     this.setNormalMessage();
-    if (this.hub && this.key) {
-      this.isKeyValid = (/^0x[0-9a-fA-F]{64}$/.test(this.key)) && await this.hub.setSecretKey(Imparter.btcManual, this.key);
-      if (!this.isKeyValid) {
+    if (this.hub && this.address) {
+      this.isAddressValid = await this.hub.setAddress(Imparter.btcManual, this.address);
+      if (!this.isAddressValid) {
         this.setInvalidMessage();
       }
     }
   }
 
-  async generate() {
-    this.setNormalMessage();
-    if (this.hub) {
-      await this.hub.generateNewKeys(Imparter.btcManual);
-      this.isKeyValid = true;
-    }
-  }
-
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = html`Login with a passphrase &mdash; Remember this passphrase &mdash; You will need it for future logins &mdash; Keep this passphrase safe in password manager`;
+    this.message = html`Provide your bitcoin address &mdash; Always login with same address &mdash; Not a change-addresses`;
   }
 
   setInvalidMessage() {
     this.messageClass = 'invalidMessage';
-    this.message = html`The passphrase must be a 64 characters '0x' prefixed hexadecimal value &mdash; <b>Easiest to just generate</b>`;
+    const network = this.hub ? this.hub.getNetwork(Imparter.btcManual) ? `<b>for testnet</b>` : `<b>for mainnet</b>` : ``;
+    this.message = html`The address must be a valid bitcoin address &mdash; ${network}`;
   }
 
   copyToClipboard() {
-    if (!this.key) return;
+    if (!this.address) return;
     const el = document.createElement('textarea');
-    el.value = this.key;
+    el.value = this.address;
     el.setAttribute('readonly', '');
     el.style.position = 'absolute';
     el.style.left = '-9999px';
@@ -285,16 +274,8 @@ export class OverhideBtcManual extends FASTElement {
     document.body.removeChild(el);
   }
 
-  showTransactions() {
-    if (this.hub && this.key && this.isKeyValid && this.address) {
-      window.open(`${this.hub.getUrl(Imparter.btcManual)}/ledger.html?address=${this.address}`,
-        'targetWindow',
-        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300')
-    }
-  }
-
   async continue() {
-    if (this.hub && this.key && this.isKeyValid && this.address) {
+    if (this.hub && this.address && this.isAddressValid) {
       await this.hub.setCurrentImparter(Imparter.btcManual);
       this.$emit('close');
     }

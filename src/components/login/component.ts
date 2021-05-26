@@ -45,36 +45,6 @@ const template = html<OverhideLogin>`
                 <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
               </div>
             `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
-              </div>
-            `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
-              </div>
-            `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
-              </div>
-            `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
-              </div>
-            `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
-              </div>
-            `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
-              </div>
-            `)}          
           </div>
         </div>
       </div>

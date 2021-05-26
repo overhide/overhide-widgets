@@ -136,6 +136,12 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.error = error;
   }
 
+  // @param {Imparter} imparter - to set
+  // @returns {string} the network name
+  public getNetwork = (imparter: Imparter): string => {
+    return NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter];
+  }
+
   // Set current imparter and authenticates
   // @param {Imparter} imparter - to set
   public setCurrentImparter = async (imparter: Imparter) => {
@@ -166,6 +172,22 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       if (imparter === Imparter.unknown) this.error = 'cannot set secret, imparter not set';
       if (!this.paymentsInfo.wallet[imparter]) {
         return await oh$.setCredentials(imparter, {secret: newKey});
+      }
+    } catch (error) {
+    }
+    return false;
+  }
+
+  // Sets credentials address for non-wallet workflow
+  // @param {Imparter} imparter - to set 
+  // @param {string} newAddress - to set
+  // @returns {Promise<boolean>} -- whether successful
+  public setAddress = async (imparter: Imparter, newAddress: string): Promise<boolean> => {
+    try {
+      if (imparter === Imparter.unknown) this.error = 'cannot set secret, imparter not set';
+      if (!this.paymentsInfo.wallet[imparter]) {
+        console.log(`JTN setAddress: ${newAddress}`);
+        return await oh$.setCredentials(imparter, {address: newAddress});
       }
     } catch (error) {
     }
@@ -254,9 +276,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       this.paymentsInfo.pendingTransaction[imparter] = amount;
       let aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
       let before = await oh$.getTally(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before
-      let options = this.paymentsInfo.payerSignature && this.paymentsInfo.messageToSign && {
-          message: this.paymentsInfo.messageToSign, 
-          signature: this.paymentsInfo.payerSignature
+      let options = this.paymentsInfo.payerSignature[imparter] && this.paymentsInfo.messageToSign[imparter] && {
+          message: this.paymentsInfo.messageToSign[imparter], 
+          signature: this.paymentsInfo.payerSignature[imparter]
         };
       await oh$.createTransaction(imparter, amount, toAddress, options);
       if (amount > 0) {
@@ -290,11 +312,16 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // @param {Imparter} imparter - to set 
   private authenticate = async (imparter: Imparter) => {
     this.outstandingCache = {}; // reset outstanding cache
-    if ((!this.paymentsInfo.payerSignature 
-          || !this.paymentsInfo.messageToSign)) {
+    if ((!this.paymentsInfo.payerSignature[imparter]
+          || !this.paymentsInfo.messageToSign[imparter])) {
+      console.log(`JTN sign :: ${imparter}`);
       await this.sign(imparter);
     }
-    await this.isOnLedger()  
+    const options = this.paymentsInfo.payerSignature[imparter] && this.paymentsInfo.messageToSign[imparter] && {
+      message: this.paymentsInfo.messageToSign[imparter], 
+      signature: this.paymentsInfo.payerSignature[imparter]
+    };
+    await this.isOnLedger(imparter, options)  ;
   }
 
   private isTestChanged(oldValue: boolean, newValue: boolean) {
@@ -318,12 +345,13 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   }
   
   // Check current credentials for any transactions on current ledger.
-  private isOnLedger = async () => {
+  // @param {Imparter} imparter - to set 
+  // @param {} options - to leverage
+  private isOnLedger = async (imparter: Imparter, options: any = {}) => {
     try {
-      const currency = this.getCurrentCurrency();
-      const imparter = this.getCurrentImparter();
       this.paymentsInfo.isOnLedger[imparter] = false;
-      if (await oh$.isOnLedger(imparter)) {
+      console.log(`JTN in isOnLedger :: ${imparter}`);
+      if (await oh$.isOnLedger(imparter, options)) {
         this.paymentsInfo.isOnLedger[imparter] = true;
       }
     } catch (error) {
@@ -335,7 +363,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   private sign = async (imparter: Imparter) => {
     try {
       const challenge = this.makePretendChallenge();
+      console.log(`JTN in sign :: ${imparter}`);
       var signature = await oh$.sign(imparter, challenge);
+      console.log(`JTN in sign :: ${signature}`);
       this.setSignature(imparter, challenge, signature);
     } catch (error) {
       this.setSignature(imparter, null, null);
@@ -366,6 +396,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   private setSignature = (imparter: Imparter, messageToSign: string | null, payerSignature: string | null) => {
     this.paymentsInfo.messageToSign[imparter] = messageToSign;
     this.paymentsInfo.payerSignature[imparter] = payerSignature;
+    console.log(`JTN setSignature :: ${JSON.stringify({imparter, messageToSign, payerSignature})}`);
     this.pingApplicationState();
   }
 
@@ -374,17 +405,17 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // @param {string} payerAddress - (out only) payer's public address as set by service
   // @param {string} payerPrivateKey - payer's private key (receipt code) iff not using wallet, null if using wallet
   private setCredentials = async (imparter: Imparter, payerAddress: string, payerPrivateKey: string | null) => {
-    if (imparter !== this.getCurrentImparter()) return;
     this.paymentsInfo.payerAddress[imparter] = payerAddress;
     this.paymentsInfo.payerPrivateKey[imparter] = payerPrivateKey;
     this.paymentsInfo.messageToSign[imparter] = null;
     this.paymentsInfo.payerSignature[imparter] = null;    
-    await this.authenticate(imparter);
+    console.log(`JTN setCredentials :: ${JSON.stringify({imparter, payerAddress, payerPrivateKey})}`);
     this.pingApplicationState();
   }
 
   // Clear credentials and wallet if problem
   private clear = (imparter: Imparter) => {
+    console.log(`JTN clear :: ${JSON.stringify({imparter})}`);
     this.paymentsInfo.enabled[imparter] = false;
     delete this.paymentsInfo.wallet[imparter];
     this.paymentsInfo.payerAddress[imparter] = null;
@@ -498,6 +529,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       if (imparter === Imparter.ethWeb3 && !this.paymentsInfo.wallet[imparter]) return;
       if (imparter === Imparter.ohledgerWeb3 && !this.paymentsInfo.wallet[imparter]) return;      
 
+      console.log(`JTN onCredentialsUpdate: ${JSON.stringify({imparter, e})}`);
       await this.setCredentials(imparter, e.address, 'secret' in e ? e.secret : null);
     });
 

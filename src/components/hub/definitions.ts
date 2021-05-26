@@ -70,6 +70,10 @@ export interface PaymentsInfo {
 }
 
 export interface IOverhideHub {
+  // @param {Imparter} imparter - to set
+  // @returns {string} the network name
+  getNetwork: (imparter: Imparter) => string;
+
   // @param {string} error -- the error string to set
   setError: (error: string) => void,
 
@@ -78,6 +82,12 @@ export interface IOverhideHub {
   // @param {string} new key - to set
   // @returns {Promise<boolean>} -- whether successful
   setSecretKey: (imparter: Imparter, newKey: string) => Promise<boolean>,
+
+  // Sets credentials address for non-wallet workflow
+  // @param {Imparter} imparter - to set 
+  // @param {string} newAddress - to set
+  // @returns {Promise<boolean>} -- whether successful
+  setAddress: (imparter: Imparter, newAddress: string) => Promise<boolean>,
 
   // Generates new PKI keys for non-wallet workflows.
   // Updates paymentsInfo provided by service.
