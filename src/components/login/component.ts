@@ -17,12 +17,16 @@ import {
 
 import { OverhideOhledger } from './ohledger';
 import { OverhideBtcManual } from './btc-manual';
+import { OverhideOhSocialMs } from './ohsocial-ms';
+import { OverhideOhSocialGoogle } from './ohsocial-google';
 
 import w3Css from "../../static/w3.css";
 import closeIcon from "../../static/icons/close.svg";
 
 OverhideOhledger;
 OverhideBtcManual;
+OverhideOhSocialMs;
+OverhideOhSocialGoogle;
 
 const template = html<OverhideLogin>`
   <template class="w3-modal" ${ref('rootElement')} style="padding-top: 0px; padding-bottom: 0px;">
@@ -35,12 +39,22 @@ const template = html<OverhideLogin>`
         <div class="modal">
           <div class="w3-container">
             <slot name="header"></slot>
+            ${when(e => e.overhideSocialMicrosoftEnabled, html<OverhideLogin>`
+              <div class="s12">
+                <overhide-ohsocial-ms hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-ms>
+              </div>
+            `)}
+            ${when(e => e.overhideSocialMicrosoftEnabled, html<OverhideLogin>`
+              <div class="s12">
+                <overhide-ohsocial-google hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-google>
+              </div>
+            `)}            
             ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
               <div class="s12">
                 <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
               </div>
             `)}
-            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
+            ${when(e => e.overhideBitcoinEnabled, html<OverhideLogin>`
               <div class="s12">
                 <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
               </div>
@@ -109,6 +123,12 @@ export class OverhideLogin extends FASTElement {
 
   @attr
   overhideLedgerEnabled?: boolean = true;
+
+  @attr
+  overhideBitcoinEnabled?: boolean = true;
+
+  @attr
+  overhideSocialMicrosoftEnabled?: boolean = true;
 
   rootElement?: HTMLElement;
   envelopeElement?: HTMLElement;

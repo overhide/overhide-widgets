@@ -23,7 +23,7 @@ const template = html<OverhideBtcManual>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name svg">${bitcoinIcon} bitcoin login</span>
+        <span class="name svg svg3">${bitcoinIcon} bitcoin login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">bitcoins</span>
@@ -109,11 +109,18 @@ const styles = css`
   .svg svg {
     width: 1em;
     height: 1em;
+    top: 4px;
+    position: relative;
   }
 
   .svg2 svg {
     width: 1.5em;
     height: 1.5em;
+  }
+
+  .svg3 svg {
+    top: 2px;
+    position: relative;
   }
 
   .clipboard {

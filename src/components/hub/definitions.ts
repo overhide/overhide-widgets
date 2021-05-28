@@ -23,6 +23,12 @@ export enum Imparter {
   btcManual = 'btc-manual'
 }
 
+export enum Social {
+  unknown = 'unknown',
+  microsoft = 'microsoft',
+  google = 'google'
+}
+
 export const CURRENCY_BY_IMPARTER: {[what in Imparter]: Currency} = {
   'eth-web3': Currency.ethers,
   'ohledger': Currency.dollars,
@@ -62,10 +68,9 @@ export interface PaymentsInfo {
   payerSignature: {[which in Imparter]: string | null},          // signed `messageToSign` by payer
   messageToSign: {[which in Imparter]: string | null},           // message to sign into `payerSignature`
 
-  defaultImparter: Imparter,                // default payment imparter
   currentImparter: Imparter,                // chosen payment imparter
-  defaultCurrency: Currency,                // default payment currency, either 'dollars' or 'ethers'
   currentCurrency: Currency,                // chosen payment currency, either 'dollars', 'ethers', or null
+  currentSocial: Social,                    // chosen social provider
   time: Date                                // just a timestamp for refresh
 }
 
@@ -97,7 +102,12 @@ export interface IOverhideHub {
 
   // Set current imparter and authenticates
   // @param {Imparter} imparter - to set
-  setCurrentImparter: (imparter: Imparter) => void,
+  // @returns {bool} true if success or cancel, false if some problem
+  setCurrentImparter: (imparter: Imparter) => Promise<boolean>,
+
+  // Set social provider if any
+  // @param {Social} social provider to set
+  setCurrentSocial: (social: Social) => void,
 
   // Is current crednetial authenticatd against the current currency's ledger? 
   // @param {Imparter} imparter - to set 

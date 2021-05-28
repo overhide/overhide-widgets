@@ -11,18 +11,19 @@ import {
 import {
   Imparter,
   IOverhideHub,
-  PaymentsInfo
+  PaymentsInfo,
+  Social
 } from '../hub/definitions';
 
 import w3Css from "../../static/w3.css";
 import infoIcon from "../../static/icons/info.svg";
-import clipboardIcon from "../../static/icons/clipboard.svg";
+import googleIcon from "../../static/icons/google.svg";
 
-const template = html<OverhideOhledger>`
+const template = html<OverhideOhSocialGoogle>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name">passphrase login</span>
+        <span class="name svg3"${googleIcon} Google social login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">dollars</span>
@@ -36,29 +37,6 @@ const template = html<OverhideOhledger>`
     </div>
     <form>
       <div class="w3-row w3-margin">
-        <div class="w3-col s12">
-          <div class="input">
-            <div class="clipboard">
-              <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isKeyValid}">${clipboardIcon}</div>
-              <input autocomplete="passphrase" name="passphrase" id="passphrase" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
-            </div>
-            <label>passphrase</label>
-          </div>
-        </div>
-      </div>
-      <div class="w3-row w3-margin">
-        <div class="w3-col s6">
-          <div class="input">
-            <input class="w3-button w3-blue" type="button" @click="${e => e.generate()}" value="generate new">
-          </div>
-        </div>
-        <div class="w3-col s6">
-          <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.isKeyValid}">
-          </div>
-        </div>
-      </div>
-      <div class="w3-row w3-margin">
         <div class="message w3-col s12">
           <span class="${e => e.messageClass}">
             ${e => e.message}
@@ -66,9 +44,14 @@ const template = html<OverhideOhledger>`
         </div>
       </div>    
       <div class="w3-row w3-margin">
-        <div class="w3-col s12">
+        <div class="w3-col s6">
           <div class="input">
-            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isKeyValid}">
+            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}">
+          </div>
+        </div>
+        <div class="w3-col s6">
+          <div class="input">
+            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address && e.isActive}">
           </div>
         </div>
       </div>    
@@ -121,12 +104,17 @@ const styles = css`
     width: 1em;
     height: 1em;
     top: 4px;
-    position: relative;    
+    position: relative;
   }
 
   .svg2 svg {
     width: 1.5em;
     height: 1.5em;
+  }
+
+  .svg3 svg {
+    top: 4px;
+    position: relative;
   }
 
   .clipboard {
@@ -191,22 +179,16 @@ const styles = css`
 
 
 @customElement({
-  name: "overhide-ohledger",
+  name: "overhide-ohsocial-google",
   template,
   styles,
 })
-export class OverhideOhledger extends FASTElement {
+export class OverhideOhSocialGoogle extends FASTElement {
   @attr 
   hubId?: string;
 
   @observable
-  key?: string | null;
-
-  @observable
   address?: string | null;
-
-  @observable
-  isKeyValid: boolean = false;
 
   @observable
   isActive: boolean = false;
@@ -251,55 +233,22 @@ export class OverhideOhledger extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.key = info.payerPrivateKey[Imparter.ohledger];
-    this.address = info.payerAddress[Imparter.ohledger];
-    this.isActive = info.currentImparter === Imparter.ohledger;
-  }
-
-  async changeKey(event: any) {
-    this.key = event.target.value;
-    this.setNormalMessage();
-    if (this.hub && this.key) {
-      this.isKeyValid = (/^0x[0-9a-fA-F]{64}$/.test(this.key)) && await this.hub.setSecretKey(Imparter.ohledger, this.key);
-      if (!this.isKeyValid) {
-        this.setInvalidMessage();
-      }
-    }
-  }
-
-  async generate() {
-    this.setNormalMessage();
-    if (this.hub) {
-      await this.hub.generateNewKeys(Imparter.ohledger);
-      this.isKeyValid = true;
-    }
+    this.address = info.payerAddress[Imparter.ohledgerSocial];
+    this.isActive = info.currentImparter === Imparter.ohledgerSocial && info.currentSocial === Social.google;
   }
 
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = html`Login with a passphrase &mdash; Remember this passphrase &mdash; You will need it for future logins &mdash; Keep this passphrase safe in password manager`;
+    this.message = null;
   }
 
   setInvalidMessage() {
     this.messageClass = 'invalidMessage';
-    this.message = html`The passphrase must be a 64 characters '0x' prefixed hexadecimal value &mdash; <b>Easiest to just generate</b>`;
-  }
-
-  copyToClipboard() {
-    if (!this.key) return;
-    const el = document.createElement('textarea');
-    el.value = this.key;
-    el.setAttribute('readonly', '');
-    el.style.position = 'absolute';
-    el.style.left = '-9999px';
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
+    this.message = html`There was a problem logging you in.`;
   }
 
   showTransactions() {
-    if (this.hub && this.key && this.isKeyValid && this.address) {
+    if (this.hub && this.address) {
       window.open(`${this.hub.getUrl(Imparter.ohledger)}/ledger.html?address=${this.address}`,
         'targetWindow',
         'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300')
@@ -307,8 +256,13 @@ export class OverhideOhledger extends FASTElement {
   }
 
   async continue() {
-    if (this.hub && this.key && this.isKeyValid && this.address) {
-      await this.hub.setCurrentImparter(Imparter.ohledger);
+    if (this.hub) {
+      await this.hub.setCurrentSocial(Social.google);
+      const result: boolean = await this.hub.setCurrentImparter(Imparter.ohledgerSocial);
+      if (!result) {
+        this.setInvalidMessage();
+        return;
+      } 
       this.$emit('close');
     }
   }

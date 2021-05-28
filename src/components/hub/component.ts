@@ -12,6 +12,7 @@ import {
   NETWORKS_BY_IMPARTER,
   Currency,
   Imparter,
+  Social,
   IOverhideHub,
   PaymentsInfo,
   NetworkType
@@ -33,10 +34,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // payments object
   @observable 
   public paymentsInfo: PaymentsInfo = {
-    currentCurrency: Currency.dollars,
-    currentImparter: Imparter.ohledger,
-    defaultCurrency: Currency.dollars,
-    defaultImparter: Imparter.ohledger,
+    currentCurrency: Currency.unknown,
+    currentImparter: Imparter.unknown,
+    currentSocial: Social.unknown,
    
     enabled: {
       "btc-manual": false,
@@ -144,7 +144,8 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   // Set current imparter and authenticates
   // @param {Imparter} imparter - to set
-  public setCurrentImparter = async (imparter: Imparter) => {
+  // @returns {bool} true if success or cancel, false if some problem
+  public setCurrentImparter = async (imparter: Imparter): Promise<boolean> => {
     const oldInfo = {...this.paymentsInfo};
     try {
       this.outstandingCache = {}; // reset outstanding cache
@@ -155,12 +156,24 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         await this.authenticate(imparter);
       }
       this.pingApplicationState();
+      return true;
     }
     catch (e) 
     {
       this.paymentsInfo = {...oldInfo};
       this.error = e;
+      if (e === 'user close') {
+        return true; // cancel
+      }
+      return false;
     }
+  }
+
+  public setCurrentSocial = async (social: Social) => {
+    this.paymentsInfo.currentSocial = social;
+    await oh$.setCredentials(Imparter.ohledgerSocial, {provider: social});
+    console.log(`JTN setCurrentSocial: ${social}`);
+    this.pingApplicationState();
   }
 
   // Sets credentials secret key for non-wallet workflow
@@ -331,12 +344,12 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   // @returns {Currency} 
   private getCurrentCurrency = () => {
-    return this.paymentsInfo.currentCurrency || this.paymentsInfo.defaultCurrency;
+    return this.paymentsInfo.currentCurrency;
   }  
 
   // @returns {Imparter} 
   private getCurrentImparter = () => {
-    return this.paymentsInfo.currentImparter || this.paymentsInfo.defaultImparter;
+    return this.paymentsInfo.currentImparter;
   }
 
   // Trigger redraw via application state update
