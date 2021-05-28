@@ -46,7 +46,7 @@ const template = html<OverhideEthWeb3>`
       <div class="w3-row w3-margin">
         <div class="w3-col s12">
           <div class="input">
-            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}">
+            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.hasWallet}">
           </div>
         </div>
       </div>    
@@ -196,6 +196,9 @@ export class OverhideEthWeb3 extends FASTElement {
   @observable
   message?:any;
 
+  @observable
+  hasWallet?: boolean;
+
   hub?: IOverhideHub; 
 
   public constructor() {
@@ -235,11 +238,16 @@ export class OverhideEthWeb3 extends FASTElement {
       this.setNormalMessage();
     }
     this.isActive = info.currentImparter === Imparter.ethWeb3;
+    this.hasWallet = info.wallet[Imparter.ethWeb3];
   }
 
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = `Address: ${this.address}`;
+    if (this.hasWallet) {
+      this.message = `Address: ${this.address}`;
+    } else {
+      this.message = `Connect a Web3 wallet`;
+    }    
   }
 
   setInvalidMessage() {

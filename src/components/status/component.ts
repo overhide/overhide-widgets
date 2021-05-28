@@ -68,7 +68,7 @@ export class OverhideStatus extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    console.log(`paymentInfoChanged :: ${JSON.stringify(info,null,2)}`);
+    console.log(`paymentInfoChanged`);
   }
 
   errorSet(error: string): void {
