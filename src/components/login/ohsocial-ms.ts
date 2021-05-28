@@ -51,7 +51,7 @@ const template = html<OverhideOhSocialMs>`
         </div>
         <div class="w3-col s6">
           <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address && e.isActive}">
+            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address || !e.isActive}">
           </div>
         </div>
       </div>    

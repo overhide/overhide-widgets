@@ -19,6 +19,8 @@ import { OverhideOhledger } from './ohledger';
 import { OverhideBtcManual } from './btc-manual';
 import { OverhideOhSocialMs } from './ohsocial-ms';
 import { OverhideOhSocialGoogle } from './ohsocial-google';
+import { OverhideOhWeb3 } from './ohledger-web3';
+import { OverhideEthWeb3 } from './eth-web3';
 
 import w3Css from "../../static/w3.css";
 import closeIcon from "../../static/icons/close.svg";
@@ -27,6 +29,8 @@ OverhideOhledger;
 OverhideBtcManual;
 OverhideOhSocialMs;
 OverhideOhSocialGoogle;
+OverhideOhWeb3;
+OverhideEthWeb3;
 
 const template = html<OverhideLogin>`
   <template class="w3-modal" ${ref('rootElement')} style="padding-top: 0px; padding-bottom: 0px;">
@@ -44,19 +48,29 @@ const template = html<OverhideLogin>`
                 <overhide-ohsocial-ms hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-ms>
               </div>
             `)}
-            ${when(e => e.overhideSocialMicrosoftEnabled, html<OverhideLogin>`
+            ${when(e => e.overhideSocialGoogleEnabled, html<OverhideLogin>`
               <div class="s12">
                 <overhide-ohsocial-google hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-google>
+              </div>
+            `)}            
+            ${when(e => e.overhideOhledgerWeb3Enabled, html<OverhideLogin>`
+              <div class="s12">
+                <overhide-ohledger-web3 hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger-web3>
+              </div>
+            `)}            
+            ${when(e => e.overhideOhledgerWeb3Enabled, html<OverhideLogin>`
+              <div class="s12">
+                <overhide-eth-web3 hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-eth-web3>
+              </div>
+            `)}            
+            ${when(e => e.overhideBitcoinEnabled, html<OverhideLogin>`
+              <div class="s12">
+                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
               </div>
             `)}            
             ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
               <div class="s12">
                 <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
-              </div>
-            `)}
-            ${when(e => e.overhideBitcoinEnabled, html<OverhideLogin>`
-              <div class="s12">
-                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
               </div>
             `)}
           </div>
@@ -129,6 +143,12 @@ export class OverhideLogin extends FASTElement {
 
   @attr
   overhideSocialMicrosoftEnabled?: boolean = true;
+
+  @attr
+  overhideSocialGoogleEnabled?: boolean = true;
+
+  @attr
+  overhideOhledgerWeb3Enabled?: boolean = true;
 
   rootElement?: HTMLElement;
   envelopeElement?: HTMLElement;

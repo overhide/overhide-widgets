@@ -17,13 +17,12 @@ import {
 
 import w3Css from "../../static/w3.css";
 import infoIcon from "../../static/icons/info.svg";
-import googleIcon from "../../static/icons/google.svg";
 
-const template = html<OverhideOhSocialGoogle>`
+const template = html<OverhideOhWeb3>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name svg3"${googleIcon} Google social login</span>
+        <span class="name svg3">wallet login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">dollars</span>
@@ -113,7 +112,9 @@ const styles = css`
   }
 
   .svg3 svg {
-    top: 4px;
+    width: 1.7em;
+    height: 1.7em;
+    top: 6px;
     position: relative;
   }
 
@@ -179,11 +180,11 @@ const styles = css`
 
 
 @customElement({
-  name: "overhide-ohsocial-google",
+  name: "overhide-ohledger-web3",
   template,
   styles,
 })
-export class OverhideOhSocialGoogle extends FASTElement {
+export class OverhideOhWeb3 extends FASTElement {
   @attr 
   hubId?: string;
 
@@ -233,13 +234,16 @@ export class OverhideOhSocialGoogle extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.address = info.payerAddress[Imparter.ohledgerSocial];
-    this.isActive = info.currentImparter === Imparter.ohledgerSocial && info.currentSocial === Social.google;
+    this.address = info.payerAddress[Imparter.ohledgerWeb3];
+    if (this.address) {
+      this.setNormalMessage();
+    }
+    this.isActive = info.currentImparter === Imparter.ohledgerWeb3;
   }
 
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = null;
+    this.message = `Address: ${this.address}`;
   }
 
   setInvalidMessage() {
@@ -257,8 +261,7 @@ export class OverhideOhSocialGoogle extends FASTElement {
 
   async continue() {
     if (this.hub) {
-      await this.hub.setCurrentSocial(Social.google);
-      const result: boolean = await this.hub.setCurrentImparter(Imparter.ohledgerSocial);
+      const result: boolean = await this.hub.setCurrentImparter(Imparter.ohledgerWeb3);
       if (!result) {
         this.setInvalidMessage();
         return;

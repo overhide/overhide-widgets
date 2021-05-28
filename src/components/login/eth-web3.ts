@@ -17,20 +17,20 @@ import {
 
 import w3Css from "../../static/w3.css";
 import infoIcon from "../../static/icons/info.svg";
-import googleIcon from "../../static/icons/google.svg";
+import ethIcon from "../../static/icons/ethereum.svg";
 
-const template = html<OverhideOhSocialGoogle>`
+const template = html<OverhideEthWeb3>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name svg3"${googleIcon} Google social login</span>
+        <span class="name svg3">${ethIcon} ethereum login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
-        <span class="currency w3-text-dark-grey">dollars</span>
+        <span class="currency w3-text-dark-grey">ethers</span>
         <span class="info svg w3-tooltip">
           ${infoIcon}
           <span class="right-tooltip w3-text w3-tag w3-round-xlarge">
-            for any in-app purchases, payments would be in US dollars
+            for any in-app purchases, payments would be in ethers (wei)
           </span>
         </span>
       </div>
@@ -44,14 +44,9 @@ const template = html<OverhideOhSocialGoogle>`
         </div>
       </div>    
       <div class="w3-row w3-margin">
-        <div class="w3-col s6">
+        <div class="w3-col s12">
           <div class="input">
             <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}">
-          </div>
-        </div>
-        <div class="w3-col s6">
-          <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address || !e.isActive}">
           </div>
         </div>
       </div>    
@@ -113,7 +108,9 @@ const styles = css`
   }
 
   .svg3 svg {
-    top: 4px;
+    width: 1.7em;
+    height: 1.7em;
+    top: 6px;
     position: relative;
   }
 
@@ -179,11 +176,11 @@ const styles = css`
 
 
 @customElement({
-  name: "overhide-ohsocial-google",
+  name: "overhide-eth-web3",
   template,
   styles,
 })
-export class OverhideOhSocialGoogle extends FASTElement {
+export class OverhideEthWeb3 extends FASTElement {
   @attr 
   hubId?: string;
 
@@ -233,13 +230,16 @@ export class OverhideOhSocialGoogle extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.address = info.payerAddress[Imparter.ohledgerSocial];
-    this.isActive = info.currentImparter === Imparter.ohledgerSocial && info.currentSocial === Social.google;
+    this.address = info.payerAddress[Imparter.ethWeb3];
+    if (this.address) {
+      this.setNormalMessage();
+    }
+    this.isActive = info.currentImparter === Imparter.ethWeb3;
   }
 
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = null;
+    this.message = `Address: ${this.address}`;
   }
 
   setInvalidMessage() {
@@ -247,18 +247,9 @@ export class OverhideOhSocialGoogle extends FASTElement {
     this.message = html`There was a problem logging you in.`;
   }
 
-  showTransactions() {
-    if (this.hub && this.address) {
-      window.open(`${this.hub.getUrl(Imparter.ohledger)}/ledger.html?address=${this.address}`,
-        'targetWindow',
-        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300')
-    }
-  }
-
   async continue() {
     if (this.hub) {
-      await this.hub.setCurrentSocial(Social.google);
-      const result: boolean = await this.hub.setCurrentImparter(Imparter.ohledgerSocial);
+      const result: boolean = await this.hub.setCurrentImparter(Imparter.ethWeb3);
       if (!result) {
         this.setInvalidMessage();
         return;
