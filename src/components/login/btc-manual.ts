@@ -119,8 +119,11 @@ const styles = css`
   }
 
   .svg3 svg {
-    top: 2px;
+    width: 1.6em;
+    height: 1.6em;
+    top: 6px;
     position: relative;
+    margin-right: .3em;
   }
 
   .clipboard {
