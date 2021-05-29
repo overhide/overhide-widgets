@@ -38,8 +38,10 @@ const template = html<OverhideLogin>`
       <div class="w3-modal-content modal">
       <div class="w3-display-container modal-container">
 
-        <button class="close-button w3-right w3-display-topright" type="button" @click="${(e, c) => e.close()}">${closeIcon}</button>
-      
+        <slot name="closeButton">
+          <button class="close-button w3-right w3-display-topright" type="button" @click="${(e, c) => e.close()}">${closeIcon}</button>
+        </slot>
+
         <div class="modal">
           <div class="w3-container">
             <slot name="header"></slot>
