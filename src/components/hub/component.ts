@@ -136,10 +136,15 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.error = error;
   }
 
-  // @param {Imparter} imparter - to set
+  // @param {Imparter} imparter - to retrieve for
   // @returns {string} the network name
   public getNetwork = (imparter: Imparter): string => {
     return NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter];
+  }
+
+  // @returns {NetworkType} the network type
+  public getNetworkType = (): NetworkType => {
+    return this.allowNetworkType;
   }
 
   // Set current imparter and authenticates
@@ -330,6 +335,11 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.paymentsInfo.messageToSign[imparter] = null;
     this.paymentsInfo.payerSignature[imparter] = null;
     this.paymentsInfo.isOnLedger[imparter] = false;
+    this.paymentsInfo.currentImparter = Imparter.unknown;
+    this.paymentsInfo.currentCurrency = Currency.unknown;
+    if (imparter == Imparter.ohledgerSocial && !!this.paymentsInfo.currentImparter && this.paymentsInfo.currentImparter != Imparter.unknown) {
+      oh$.setCredentials(null);
+    }
     this.pingApplicationState();
   }
 

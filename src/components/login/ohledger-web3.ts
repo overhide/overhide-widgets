@@ -18,12 +18,13 @@ import {
 import w3Css from "../../static/w3.css";
 import widgetCss from "./widget.css";
 import infoIcon from "../../static/icons/info.svg";
+import walletIcon from "../../static/icons/wallet.svg";
 
 const template = html<OverhideOhWeb3>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name svg3">wallet login</span>
+        <span class="name svg3">${walletIcon} wallet login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">dollars</span>
@@ -51,7 +52,7 @@ const template = html<OverhideOhWeb3>`
         </div>
         <div class="w3-col s6">
           <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address || !e.isActive}">
+            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address}">
           </div>
         </div>
       </div>    

@@ -11,6 +11,7 @@ import {
 import {
   Imparter,
   IOverhideHub,
+  NetworkType,
   PaymentsInfo,
   Social
 } from '../hub/definitions';
@@ -45,11 +46,16 @@ const template = html<OverhideEthWeb3>`
         </div>
       </div>    
       <div class="w3-row w3-margin">
-        <div class="w3-col s12">
+        <div class="w3-col s6">
           <div class="input">
             <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.hasWallet}">
           </div>
         </div>
+        <div class="w3-col s6">
+          <div class="input">
+            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address}">
+          </div>
+        </div>        
       </div>    
     </form>
   </div>
@@ -139,6 +145,15 @@ export class OverhideEthWeb3 extends FASTElement {
   setInvalidMessage() {
     this.messageClass = 'invalidMessage';
     this.message = html`There was a problem logging you in.`;
+  }
+
+  showTransactions() {
+    if (this.hub && this.address) {
+      const url = this.hub.getNetworkType() == NetworkType.prod ? 'https://etherscan.io/address/' : 'https://rinkeby.etherscan.io/address/' ;
+      window.open(`${url}${this.address}`,
+        'targetWindow',
+        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800')
+    }
   }
 
   async continue() {

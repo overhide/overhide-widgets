@@ -18,12 +18,13 @@ import w3Css from "../../static/w3.css";
 import widgetCss from "./widget.css";
 import infoIcon from "../../static/icons/info.svg";
 import clipboardIcon from "../../static/icons/clipboard.svg";
+import passphraseIcon from "../../static/icons/passphrase.svg";
 
 const template = html<OverhideOhledger>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name">passphrase login</span>
+        <span class="name svg3">${passphraseIcon} passphrase login</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">dollars</span>

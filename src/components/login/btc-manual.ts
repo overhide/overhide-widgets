@@ -11,7 +11,8 @@ import {
 import {
   Imparter,
   IOverhideHub,
-  PaymentsInfo
+  PaymentsInfo,
+  NetworkType
 } from '../hub/definitions';
 
 import w3Css from "../../static/w3.css";
@@ -56,11 +57,16 @@ const template = html<OverhideBtcManual>`
         </div>
       </div>    
       <div class="w3-row w3-margin">
-        <div class="w3-col s12">
+        <div class="w3-col s6">
           <div class="input">
             <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isAddressValid}">
           </div>
         </div>
+        <div class="w3-col s6">
+          <div class="input">
+            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address}">
+          </div>
+        </div>        
       </div>    
     </form>
   </div>
@@ -154,6 +160,15 @@ export class OverhideBtcManual extends FASTElement {
     this.messageClass = 'invalidMessage';
     const network = this.hub ? this.hub.getNetwork(Imparter.btcManual) ? `<b>for testnet</b>` : `<b>for mainnet</b>` : ``;
     this.message = html`The address must be a valid bitcoin address &mdash; ${network}`;
+  }
+
+  showTransactions() {
+    if (this.hub && this.address) {
+      const url = this.hub.getNetworkType() == NetworkType.prod ? 'https://www.blockchain.com/btc/address/' : 'https://www.blockchain.com/btc-testnet/address/' ;
+      window.open(`${url}${this.address}`,
+        'targetWindow',
+        'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800')
+    }
   }
 
   copyToClipboard() {

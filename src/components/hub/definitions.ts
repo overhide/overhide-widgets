@@ -75,9 +75,12 @@ export interface PaymentsInfo {
 }
 
 export interface IOverhideHub {
-  // @param {Imparter} imparter - to set
+  // @param {Imparter} imparter - to retrieve for
   // @returns {string} the network name
   getNetwork: (imparter: Imparter) => string;
+
+  // @returns {NetworkType} the network type
+  getNetworkType: () => NetworkType;
 
   // @param {string} error -- the error string to set
   setError: (error: string) => void,

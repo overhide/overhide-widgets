@@ -4,20 +4,147 @@ import {
   html,
   css,
   attr,
-  Observable
+  observable,
+  Observable,
+  when
 } from "@microsoft/fast-element";
 
 import {
-  PaymentsInfo
+  Imparter,
+  IOverhideHub,
+  NetworkType,
+  PaymentsInfo,
+  Social
 } from '../hub/definitions';
 
 import w3Css from "../../static/w3.css";
+import microsoftIcon from "../../static/icons/microsoft.svg";
+import googleIcon from "../../static/icons/google.svg";
+import ethIcon from "../../static/icons/ethereum.svg";
+import bitcoinIcon from "../../static/icons/bitcoin.svg";
+import passphraseIcon from "../../static/icons/passphrase.svg";
+import walletIcon from "../../static/icons/wallet.svg";
+import deniedIcon from "../../static/icons/denied.svg";
+import logoutIcon from "../../static/icons/logout.svg";
+import errorIcon from "../../static/icons/error.svg";
 
 const template = html<OverhideStatus>`
+  <div class="input">
+    <div class="panel ${e => e.canGetTransactions ? '' : 'disabled'} ${e => e.error ? 'w3-tooltip' : ''}" @click="${e => e.seeTransactions()}">
+
+      ${when(e => e.error, html<OverhideStatus>`
+        <span class="name svg3">${errorIcon}</span>
+      `)}
+      ${when(e => !e.logo && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${deniedIcon}</span>
+      `)}
+      ${when(e => e.logo == 'microsoft' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${microsoftIcon}</span>
+      `)}
+      ${when(e => e.logo == 'google' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${googleIcon}</span>
+      `)}
+      ${when(e => e.logo == 'wallet' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${walletIcon}</span>
+      `)}
+      ${when(e => e.logo == 'eth' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${ethIcon}</span>
+      `)}
+      ${when(e => e.logo == 'bitcoin' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${bitcoinIcon}</span>
+      `)}
+      ${when(e => e.logo == 'passphrase' && !e.error, html<OverhideStatus>`
+        <span class="name svg3">${passphraseIcon}</span>
+      `)}
+
+      <div type="button">
+        <div class="label"><span>&nbsp;${e => e.address}</span></div>
+      </div>
+      
+      ${when(e => e.error, html<OverhideStatus>`
+        <span class="right-tooltip w3-text w3-tag w3-round-xlarge">
+          ${e => e.error}
+        </span>        
+      `)}
+
+      <div class="logout svg2 ${e => e.canLogout ? '' : 'disabled'}" @click="${e => e.logout()}">${logoutIcon}</div>
+    </div>
+  </div>
 `;
 
 const styles = css`
 ${w3Css}
+
+  .svg3 svg {
+    width: 1.2em;
+    height: 1.2em;
+  }
+
+  .panel {
+    display: flex;
+  }
+
+  .panel.disabled {
+    opacity: .5;
+    cursor: default;
+  }
+
+  .input {
+    margin-left: .5em;
+    margin-right: .5em;
+    cursor:pointer;
+  }
+  
+  .input input {
+    width: 100%;
+  }
+
+  .panel .name {
+    left: 1px;
+    top: 6px;
+    min-width: 1.5em;
+    text-align: center;
+    position: relative;
+  }    
+ 
+  .panel .logout {
+    right: 1px;
+    position: relative;
+    top: 2px;
+    min-width: 1.5em;
+    text-align: center;
+    cursor:pointer;
+  }    
+
+  .panel .logout.disabled {
+    opacity: .5;
+    cursor: default;
+  }  
+
+  .panel .logout svg {
+    width: 1.5em;
+  }  
+
+  .label {
+    width: 6em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    top: 3px;
+  }
+
+  .label span {
+    height: 1em;
+  }
+
+  .right-tooltip {
+    position:fixed;
+    right: 5em;
+    top: 5em;
+    width: 15em;
+    z-index: 50;
+  }  
 `;
 
 
@@ -30,11 +157,30 @@ export class OverhideStatus extends FASTElement {
   @attr 
   hubId?: string;
 
+  @observable
+  error?: string | null
+
+  @observable
+  logo?: string | null;
+
+  @observable
+  address?: string | null = 'no sign-in';
+
+  @observable
+  canLogout?: boolean | null;
+
+  @observable
+  canGetTransactions?: boolean | null;
+
+  hub?: IOverhideHub | null; 
+  currentImparter?: Imparter | null;
+
   public constructor() {
     super(); 
   }
 
   public setHub(hub: any) {
+    this.hub = hub;
     const notifier = Observable.getNotifier(hub);
     const that = this;
     const handler = {
@@ -68,10 +214,85 @@ export class OverhideStatus extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    console.log(`paymentInfoChanged :: ${JSON.stringify(info,null,2)}`);
+    this.error = null;
+    this.currentImparter = info.currentImparter;
+    this.address = info.payerAddress[info.currentImparter] || 'no sign-in';
+    this.canLogout = false;
+    this.canGetTransactions = false;
+    switch (info.currentImparter) {
+      case Imparter.ohledgerSocial:
+        switch (info.currentSocial) {
+          case Social.microsoft:
+            this.logo = 'microsoft';
+            this.canLogout = true;
+            this.canGetTransactions = true;
+            break;
+          case Social.google:
+            this.logo = 'google';
+            this.canLogout = true;
+            this.canGetTransactions = true;
+            break;
+          default:
+            this.logo = null;            
+        }
+        break;
+      case Imparter.ohledgerWeb3:
+        this.logo = 'wallet';
+        this.canGetTransactions = true;
+        break;
+      case Imparter.ethWeb3:
+        this.logo = 'eth';
+        this.canGetTransactions = true;
+        break;
+      case Imparter.btcManual:
+        this.logo = 'bitcoin';
+        this.canLogout = true;
+        this.canGetTransactions = true;
+        break;
+      case Imparter.ohledger:
+        this.logo = 'passphrase';
+        this.canLogout = true;
+        this.canGetTransactions = true;
+        break;
+      default:
+        this.logo = null;
+    }
+  }
+
+  logout(): void {
+    if (this.hub && this.currentImparter && this.canLogout) {
+      this.hub.clear(this.currentImparter);
+    }
   }
 
   errorSet(error: string): void {
-    console.log(`ERROR (overhide-status) :: ${error}`);
+    this.error = error;
+    this.address = 'problem';
+  }
+
+  seeTransactions() {
+    if (this.hub && this.address && this.currentImparter) {
+      switch (this.currentImparter) {
+        case Imparter.ohledger:
+        case Imparter.ohledgerWeb3:
+        case Imparter.ohledgerSocial:
+          window.open(`${this.hub.getUrl(Imparter.ohledger)}/ledger.html?address=${this.address}`,
+          'targetWindow',
+          'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=300')
+          break;
+        case Imparter.btcManual:
+          var url = this.hub.getNetworkType() == NetworkType.prod ? 'https://www.blockchain.com/btc/address/' : 'https://www.blockchain.com/btc-testnet/address/' ;
+          window.open(`${url}${this.address}`,
+            'targetWindow',
+            'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800');
+          break;
+        case Imparter.ethWeb3:
+          var url = this.hub.getNetworkType() == NetworkType.prod ? 'https://etherscan.io/address/' : 'https://rinkeby.etherscan.io/address/' ;
+          window.open(`${url}${this.address}`,
+            'targetWindow',
+            'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800');
+          break;
+      }
+    }
   }
 }
