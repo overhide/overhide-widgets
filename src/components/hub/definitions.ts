@@ -130,4 +130,12 @@ export interface IOverhideHub {
   // @param {Imparter} imparter - to set 
   // @return {string} the URL
   getUrl: (impater: Imparter) => string;
+
+  // Clear and log-out of the provided imparter.
+  // @param {Imparter} imparter - to set 
+  clear: (imparter: Imparter) => void;
+
+  // Get the current info
+  // @returns {PaymentsInfo} -- the current info
+  getInfo: () => PaymentsInfo;
 }

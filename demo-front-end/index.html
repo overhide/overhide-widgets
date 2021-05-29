@@ -8,13 +8,17 @@
   <body>
     <div id="overhide-widgets-demo">
 
-      <overhide-hub id="demo-hub" isTest=true></overhide-hub>
-      <overhide-status hubId="demo-hub"></overhide-status>
+      <overhide-hub id="demo-hub" isTest=true></overhide-hub>      
+
+      <div class="w3-bar w3-border w3-light-grey">
+        <overhide-status hubId="demo-hub"></overhide-status>
+      </div>
+
       <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
 
       <div class="w3-row w3-padding-64"><div class="w3-col s12 w3-center">
         <button onclick="document.getElementById('login-widget').style.display='block'" 
-                class="w3-button w3-black">
+                class="w3-button w3-green">
                 Login
         </button>
       </div></div>

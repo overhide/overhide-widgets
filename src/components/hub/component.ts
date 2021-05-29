@@ -170,10 +170,16 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   }
 
   public setCurrentSocial = async (social: Social) => {
-    this.paymentsInfo.currentSocial = social;
-    await oh$.setCredentials(Imparter.ohledgerSocial, {provider: social});
-    console.log(`JTN setCurrentSocial: ${social}`);
-    this.pingApplicationState();
+    if (this.paymentsInfo.currentSocial != social) {
+      this.paymentsInfo.payerAddress[Imparter.ohledgerSocial] = null;
+      this.paymentsInfo.payerSignature[Imparter.ohledgerSocial] = null;
+      this.paymentsInfo.messageToSign[Imparter.ohledgerSocial] = null;
+      this.paymentsInfo.isOnLedger[Imparter.ohledgerSocial] = false;
+      this.paymentsInfo.currentSocial = social;
+      await oh$.setCredentials(Imparter.ohledgerSocial, {provider: social});
+      console.log(`JTN setCurrentSocial: ${social}`);
+      this.pingApplicationState();  
+    }
   }
 
   // Sets credentials secret key for non-wallet workflow
@@ -314,6 +320,21 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     }
   }
 
+  // Clear credentials and wallet if problem
+  public clear = (imparter: Imparter) => {
+    console.log(`JTN clear :: ${JSON.stringify({imparter})}`);
+    this.paymentsInfo.enabled[imparter] = false;
+    delete this.paymentsInfo.wallet[imparter];
+    this.paymentsInfo.payerAddress[imparter] = null;
+    this.paymentsInfo.payerPrivateKey[imparter] = null;
+    this.paymentsInfo.messageToSign[imparter] = null;
+    this.paymentsInfo.payerSignature[imparter] = null;
+    this.paymentsInfo.isOnLedger[imparter] = false;
+    this.pingApplicationState();
+  }
+
+  public getInfo = () => this.paymentsInfo;
+
   // Get URL for imparter
   // @param {Imparter} imparter - to set 
   // @return {string} the URL
@@ -378,9 +399,13 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       const challenge = this.makePretendChallenge();
       console.log(`JTN in sign :: ${imparter}`);
       var signature = await oh$.sign(imparter, challenge);
-      console.log(`JTN in sign :: ${signature}`);
+      if (imparter == Imparter.ohledgerSocial) {
+        this.setCredentials(imparter, oh$.getCredentials(imparter).address, null);
+      }
+      console.log(`JTN done sign :: ${signature}`);
       this.setSignature(imparter, challenge, signature);
     } catch (error) {
+      console.log(`JTN error sign :: ${error}`);
       this.setSignature(imparter, null, null);
       throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
     }
@@ -423,18 +448,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.paymentsInfo.messageToSign[imparter] = null;
     this.paymentsInfo.payerSignature[imparter] = null;    
     console.log(`JTN setCredentials :: ${JSON.stringify({imparter, payerAddress, payerPrivateKey})}`);
-    this.pingApplicationState();
-  }
-
-  // Clear credentials and wallet if problem
-  private clear = (imparter: Imparter) => {
-    console.log(`JTN clear :: ${JSON.stringify({imparter})}`);
-    this.paymentsInfo.enabled[imparter] = false;
-    delete this.paymentsInfo.wallet[imparter];
-    this.paymentsInfo.payerAddress[imparter] = null;
-    this.paymentsInfo.payerPrivateKey[imparter] = null;
-    this.paymentsInfo.messageToSign[imparter] = null;
-    this.paymentsInfo.payerSignature[imparter] = null;    
     this.pingApplicationState();
   }
 
