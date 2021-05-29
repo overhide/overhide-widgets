@@ -6,10 +6,10 @@ module.exports = function(env, { mode }) {
     mode: production ? 'production' : 'development',
     devtool: production ? 'source-maps' : 'inline-source-map',
     entry: {
-      app: ['./src/main.ts']
+      app: ['./src/overhide-widgets.ts']
     },
     output: {
-      filename: 'bundle.js'
+      filename: 'overhide-widgets.js'
     },
     resolve: {
       extensions: ['.ts', '.js'],

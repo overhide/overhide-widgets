@@ -2,8 +2,8 @@
   "name": "overhide-widgets",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/bundle.js",
-  "types": "dist/build/main.d.ts",
+  "main": "dist/overhide-widgets.js",
+  "types": "dist/overhide-widgets.d.ts",
   "scripts": {
     "build": "rimraf dist && webpack --config webpack.config.js --mode=production",
     "dev": "webpack-dev-server",
