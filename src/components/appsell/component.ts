@@ -6,6 +6,7 @@ import {
   attr,
   observable,
   Observable,
+  slotted,
   when
 } from "@microsoft/fast-element";
 
@@ -31,18 +32,14 @@ const template = html<OverhideAppsell>`
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
-          <slot name="authorized-button" class="w3-button w3-blue button-content">
-            <slot name="authorized-message"></slot>
-          </slot>
-        </div>
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-blue" ${e => e.isEnabled ? '' : 'disabled'}"  @click="${e => e.click()}">
+          <div class="button-content">${e => e.getAuthButtonContent()}</div>
+        </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
-          <slot name="unauthorized-button" class="w3-button button-content w3-blue">
-            <slot name="unauthorized-prefix"></slot><slot name="unauthorized-dollars">${e => e.toDollars(e.topupDollars)}</slot><slot name="unauthorized-postfix"></slot>
-          </slot>
-        </div>
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-blue ${e => e.isEnabled ? '' : 'disabled'}"  @click="${e => e.click()}">
+          <div class="button-content">${e => e.getUnauthButtonContent()}</div>
+        </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
         <slot name="authorized-footer"></slot>
@@ -82,21 +79,24 @@ ${w3Css}
     flex-direction: column;
   }
 
-  .button {
-    cursor: pointer;
-    flex-basis: 100%;
-    flex-grow: 2;    
-  }
-
   .button.disabled {
     cursor: inherit;
     opacity: .5;
   }
 
-  .button-content {
+  .button {
+    cursor: pointer !important;
+    flex-basis: 100%;
+    flex-grow: 2;     
     width: 100%;
     height: 100%;
     white-space: inherit;
+    margin: 0px;
+    padding: 0px;
+  }
+
+  .button-content {
+    padding: 1em;
   }
 `;
 
@@ -137,6 +137,21 @@ export class OverhideAppsell extends FASTElement {
   @attr
   priceDollars?: number | null;
 
+  // String to show when component detects fully authorized state.
+  @attr
+  authorizedMessage: string = 'overwrite authorizedMessage attribute';
+
+  // String to show before the dollar value when component detects unauthorized state:  dollar value is top-up amount.
+  @attr
+  unauthorizedPrefix: string = ' overwrite unatuthorizedPrefix attribute';
+
+  // String to show after the dollar value when component detects unauthorized state:  dollar value is top-up amount.
+  @attr
+  unauthorizedPostfix: string = ' overwrite unatuthorizedPostfix attribute';
+
+  @attr({ mode: 'boolean' })
+  hideUnauthorizedDollars: boolean = false;
+
   @observable
   topupDollars?: number | null;
 
@@ -145,6 +160,12 @@ export class OverhideAppsell extends FASTElement {
 
   @observable
   isAuthorized?: boolean | null;
+
+  @observable 
+  authorizedButton?: Node[];
+
+  @observable 
+  unauthorizedButton?: Node[];  
 
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
@@ -184,6 +205,7 @@ export class OverhideAppsell extends FASTElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this.wireUpButtonContent();
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
@@ -192,5 +214,53 @@ export class OverhideAppsell extends FASTElement {
 
   toDollars(what?: number | null): string {
     return (Math.round((what || 0) * 100) / 100).toFixed(2);
+  }
+
+  authorizedButtonChanged(oldValue: string, newValue: string) {
+    this.wireUpButtonContent();
+  }
+
+  unauthorizedButtonChanged(oldValue: string, newValue: string) {
+    this.wireUpButtonContent();
+  }
+
+  authorizedMessageChanged(oldValue: string, newValue: string) {
+    this.authorizedMessage = newValue;
+    this.wireUpButtonContent();
+  }
+
+  unauthorizedPrefixChanged(oldValue: string, newValue: string) {
+    this.unauthorizedPrefix = newValue;
+    this.wireUpButtonContent();
+  }
+
+  hideUnauthorizedDollarsChanged(oldValue: boolean, newValue: boolean) {
+    this.hideUnauthorizedDollars = newValue;
+    this.wireUpButtonContent();
+  }
+
+  unauthorizedPostfixChanged(oldValue: string, newValue: string) {
+    this.unauthorizedPostfix = newValue;
+    this.wireUpButtonContent();
+  }
+
+  wireUpButtonContent() {
+    const authButton: Node | null = this.authorizedButton && this.authorizedButton.length > 0 ? this.authorizedButton[0] : null;
+    if (authButton) {
+      authButton.textContent = this.getAuthButtonContent();
+    }
+
+    const unauthButton: Node | null = this.unauthorizedButton && this.unauthorizedButton.length > 0 ? this.unauthorizedButton[0] : null;
+    if (unauthButton) {
+      unauthButton.textContent = this.getUnauthButtonContent();
+    }
+  }
+
+  getAuthButtonContent(): string {
+    return this.authorizedMessage;;
+  }
+
+  getUnauthButtonContent(): string {
+    return this.unauthorizedPrefix + (this.hideUnauthorizedDollars ? '' : this.toDollars(this.topupDollars)) + this.unauthorizedPostfix;
   }
 }
