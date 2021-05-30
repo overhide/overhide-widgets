@@ -66,6 +66,8 @@ ${w3Css}
   }
 
   .panel {
+    flex-basis: 100%;
+    flex-grow: 2;      
     display: flex;
     align-items: stretch;
     justify-content: center;
