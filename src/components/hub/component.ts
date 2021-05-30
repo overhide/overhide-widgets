@@ -11,6 +11,7 @@ import {
   CURRENCY_BY_IMPARTER,
   NETWORKS_BY_IMPARTER,
   Currency,
+  IOverhideLogin,
   Imparter,
   Social,
   IOverhideHub,
@@ -107,6 +108,8 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       ohledger: null,
       unknown: null
     },
+
+    loginElement: null,
 
     time: new Date()
   };
@@ -335,6 +338,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // Clear credentials and wallet if problem
   public clear = (imparter: Imparter) => {
     console.log(`JTN clear :: ${JSON.stringify({imparter})}`);
+    this.outstandingCache = {};
     this.paymentsInfo.enabled[imparter] = false;
     delete this.paymentsInfo.wallet[imparter];
     this.paymentsInfo.payerAddress[imparter] = null;
@@ -357,6 +361,11 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // @return {string} the URL
   public getUrl = (imparter: Imparter) => {
     return oh$.getOverhideRemunerationAPIUri(imparter);
+  }
+
+  public setLoginElement = (element?: IOverhideLogin | null) => {
+    this.paymentsInfo.loginElement = element;
+    this.pingApplicationState();
   }
 
   // Authenticate for the specific imparter.

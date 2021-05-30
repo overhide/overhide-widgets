@@ -12,6 +12,8 @@ import {
 
 import {
   Imparter,
+  IOverhideAppsell,
+  IOverhideLogin,
   IOverhideHub,
   NetworkType,
   PaymentsInfo,
@@ -32,12 +34,12 @@ const template = html<OverhideAppsell>`
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-light-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getAuthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-light-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getUnauthButtonContent()}</div>
         </slot>
       `)}
@@ -131,7 +133,7 @@ export interface OverhideSkuClickedEvent {
   template,
   styles,
 })
-export class OverhideAppsell extends FASTElement {
+export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @attr 
   hubId?: string;
 
@@ -170,6 +172,8 @@ export class OverhideAppsell extends FASTElement {
 
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
+  loginElement?: IOverhideLogin | null;
+  isLogedIn: boolean = false
 
   public constructor() {
     super(); 
@@ -193,6 +197,13 @@ export class OverhideAppsell extends FASTElement {
   }
 
   public click(): void {
+    if (!this.inhibitLogin && !this.isAuthorized && this.loginElement && !this.isLogedIn) {
+      this.loginElement.open();
+      return;
+    }
+    if (this.isLogedIn) {
+      
+    }
   }
 
   hubIdChanged(oldValue: string, newValue: string) {
@@ -211,6 +222,8 @@ export class OverhideAppsell extends FASTElement {
 
   paymentInfoChanged(info: PaymentsInfo): void {
     this.currentImparter = info.currentImparter;
+    this.loginElement = info.loginElement;
+    this.isLogedIn = !!info.currentImparter && !!info.payerSignature[info.currentImparter];
   }
 
   toDollars(what?: number | null): string {

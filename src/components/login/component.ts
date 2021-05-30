@@ -10,7 +10,7 @@ import {
 } from "@microsoft/fast-element";
 
 import {
-  Imparter,
+  IOverhideLogin,
   IOverhideHub,
   PaymentsInfo
 } from '../hub/definitions';
@@ -133,7 +133,7 @@ const styles = css`
   template,
   styles,
 })
-export class OverhideLogin extends FASTElement {
+export class OverhideLogin extends FASTElement implements IOverhideLogin {
   @attr 
   hubId?: string;
 
@@ -160,6 +160,22 @@ export class OverhideLogin extends FASTElement {
     super(); 
   }
 
+  // Open the login modal
+  public open(): void {
+    if (this.rootElement) {
+      this.rootElement.style.display = 'block';
+      this.$emit('overhide-login-open');
+    }    
+  }
+
+  // Close the login modal
+  public close(): void {
+    if (this.rootElement) {
+      this.rootElement.style.display = 'none';
+      this.$emit('overhide-login-close');
+    }
+  }
+
   public setHub(hub: IOverhideHub) {
     this.hub = hub;
     const notifier = Observable.getNotifier(hub);
@@ -173,6 +189,7 @@ export class OverhideLogin extends FASTElement {
         } 
       }
     }
+    this.hub.setLoginElement(this);
 
     notifier.subscribe(handler, 'paymentsInfo')
     notifier.subscribe(handler, 'error')
@@ -202,13 +219,6 @@ export class OverhideLogin extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-  }
-
-  close(): void {
-    if (this.rootElement) {
-      this.rootElement.style.display = 'none';
-      this.$emit('overhide-login-close');
-    }
   }
 
   outsideClick(event: any) {

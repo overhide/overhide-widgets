@@ -57,6 +57,7 @@ export const NETWORKS_BY_IMPARTER: {[which in NetworkType]: {[what in Imparter]:
   }
 };
 
+// The structure shared by the hub to all the components in the system.
 export interface PaymentsInfo {
   enabled: {[which in Imparter]: boolean},  // keyed by (currentImparter || defaultImparter); informs if currency available, e.g. wallet availble
   wallet: {[which in Imparter]: boolean},   // keyed by (currentImparter || defaultImparter); informs of currently used wallet
@@ -71,9 +72,41 @@ export interface PaymentsInfo {
   currentImparter: Imparter,                // chosen payment imparter
   currentCurrency: Currency,                // chosen payment currency, either 'dollars', 'ethers', or null
   currentSocial: Social,                    // chosen social provider
-  time: Date                                // just a timestamp for refresh
+  time: Date,                               // just a timestamp for refresh
+
+  loginElement?: IOverhideLogin | null         // the login element
 }
 
+export interface IOverhideAppsell {
+  // Set the hub against the login compontnet.
+  // An alternative to the `hubId` attribute on the component
+  // @param {IOverhideHub} hub -- the hub to set
+  setHub(hub: IOverhideHub): void;
+  
+  // Programatically 'click' the appsell widget.
+  click(): void;
+}
+
+// Represents the one login component sitting in your DOM ready to be displayed at fixed coordiantes
+// as an overlay.
+//
+// Reference available from the PaymentsInfo::loginElement.
+export interface IOverhideLogin {
+  // Set the hub against the login compontnet.
+  // An alternative to the `hubId` attribute on the component
+  // @param {IOverhideHub} hub -- the hub to set
+  setHub(hub: IOverhideHub): void;
+
+  // Close the login modal
+  close(): void;
+
+  // Open the login modal
+  open(): void;
+}
+
+// Represents the one non-visible hub component that controls all the activity.  
+// This doesn't need to be in the dom, but the same hub must be programatically
+// connected to all the components.
 export interface IOverhideHub {
   // @param {Imparter} imparter - to retrieve for
   // @returns {string} the network name
@@ -141,4 +174,8 @@ export interface IOverhideHub {
   // Get the current info
   // @returns {PaymentsInfo} -- the current info
   getInfo: () => PaymentsInfo;
+
+  // Sets the login element
+  // @param {HTMLElement} element -- the login element
+  setLoginElement: (element?: IOverhideLogin | null) => void;
 }

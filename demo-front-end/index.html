@@ -8,6 +8,22 @@
 
   <body>
     <div id="demo-front-end">
+
+      <style>
+        overhide-appsell {
+          width: 60%;
+        }
+        .lime-button {
+          background-color: #cddc39; 
+          width: 100%; 
+          height: 100%; 
+          padding: 1em;
+        }
+        .lime-button:hover {
+          background-color: #d6e07a;
+        }
+      </style>
+
       <overhide-hub id="demo-hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest=true></overhide-hub>      
 
       <div class="w3-bar w3-border w3-light-grey">
@@ -19,8 +35,8 @@
       <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
 
       <div class="w3-row w3-padding-64"><div class="w3-col s12 w3-center">
-        <button onclick="document.getElementById('login-widget').style.display='block'" 
-                class="w3-button w3-green">
+        <button onclick="document.getElementById('login-widget').open()" 
+                class="w3-button w3-border w3-border-green">
                 Login
         </button>
       </div></div>
@@ -31,9 +47,8 @@
             hubId="demo-hub" 
             sku="free-feature"
             authorizedMessage="Use Feature"
-            unauthorizedTemplate="Login to Use Free Feature"
-            style="width: 60%;">
-              <div slot="unauthorized-button" style="background-color: purple; width: 100%; height: 100%; padding: 1em;">ignored</div>
+            unauthorizedTemplate="Login to Use Free Feature">
+              <div slot="unauthorized-button" class="lime-button"></div>
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
@@ -41,8 +56,7 @@
             hubId="demo-hub" 
             sku="paid-feature"
             authorizedMessage="Use Feature"
-            unauthorizedTemplate="Add Feature (${topup})"
-            style="width: 60%;">
+            unauthorizedTemplate="Add Feature (${topup})">
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
@@ -50,8 +64,7 @@
             hubId="demo-hub" 
             sku="subscribed-feature"
             authorizedMessage="Use Feature"
-            unauthorizedTemplate="Subscribe Feature For 2 Minutes (${topup})"
-            style="width: 60%;">
+            unauthorizedTemplate="Subscribe Feature For 2 Minutes (${topup})">
           </overhide-appsell>
         </div>
       </div>
