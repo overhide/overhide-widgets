@@ -31,9 +31,7 @@
             hubId="demo-hub" 
             sku="free-feature"
             authorizedMessage="Use Feature"
-            unauthorizedPrefix="Login to Use Free Feature"
-            unauthorizedPostfix=""
-            hideUnauthorizedDollars
+            unauthorizedTemplate="Login to Use Free Feature"
             style="width: 60%;">
               <div slot="unauthorized-button" style="background-color: purple; width: 100%; height: 100%; padding: 1em;">ignored</div>
           </overhide-appsell>
@@ -43,8 +41,7 @@
             hubId="demo-hub" 
             sku="paid-feature"
             authorizedMessage="Use Feature"
-            unauthorizedPrefix="Add Feature ("
-            unauthorizedPostfix=")"
+            unauthorizedTemplate="Add Feature (${topup})"
             style="width: 60%;">
           </overhide-appsell>
         </div>
@@ -53,8 +50,7 @@
             hubId="demo-hub" 
             sku="subscribed-feature"
             authorizedMessage="Use Feature"
-            unauthorizedPrefix="Subscribe Feature For 2 Minutes ("
-            unauthorizedPostfix=")"
+            unauthorizedTemplate="Subscribe Feature For 2 Minutes (${topup})"
             style="width: 60%;">
           </overhide-appsell>
         </div>

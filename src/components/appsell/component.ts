@@ -141,16 +141,10 @@ export class OverhideAppsell extends FASTElement {
   @attr
   authorizedMessage: string = 'overwrite authorizedMessage attribute';
 
-  // String to show before the dollar value when component detects unauthorized state:  dollar value is top-up amount.
+  // Template String to show when component detects unauthorized state:  top-up amount is replaced 
+  // at the ${topup} placeholder.
   @attr
-  unauthorizedPrefix: string = ' overwrite unatuthorizedPrefix attribute';
-
-  // String to show after the dollar value when component detects unauthorized state:  dollar value is top-up amount.
-  @attr
-  unauthorizedPostfix: string = ' overwrite unatuthorizedPostfix attribute';
-
-  @attr({ mode: 'boolean' })
-  hideUnauthorizedDollars: boolean = false;
+  unauthorizedTemplate: string = ' overwrite unauthorizedTemplate attribute';
 
   @observable
   topupDollars?: number | null;
@@ -229,18 +223,8 @@ export class OverhideAppsell extends FASTElement {
     this.wireUpButtonContent();
   }
 
-  unauthorizedPrefixChanged(oldValue: string, newValue: string) {
-    this.unauthorizedPrefix = newValue;
-    this.wireUpButtonContent();
-  }
-
-  hideUnauthorizedDollarsChanged(oldValue: boolean, newValue: boolean) {
-    this.hideUnauthorizedDollars = newValue;
-    this.wireUpButtonContent();
-  }
-
-  unauthorizedPostfixChanged(oldValue: string, newValue: string) {
-    this.unauthorizedPostfix = newValue;
+  unauthorizedTemplateChanged(oldValue: string, newValue: string) {
+    this.unauthorizedTemplate = newValue;
     this.wireUpButtonContent();
   }
 
@@ -261,6 +245,6 @@ export class OverhideAppsell extends FASTElement {
   }
 
   getUnauthButtonContent(): string {
-    return this.unauthorizedPrefix + (this.hideUnauthorizedDollars ? '' : this.toDollars(this.topupDollars)) + this.unauthorizedPostfix;
+    return this.unauthorizedTemplate.replace(/\$\{topup\}/g, this.toDollars(this.topupDollars));
   }
 }
