@@ -5,8 +5,23 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js"></script>
   </head>
+
   <body>
     <div id="demo-front-end">
+
+      <style>
+        .buttons-row {
+          display: flex; 
+          align-content: stretch;      
+        }   
+        overhide-appsell {
+          width: 60%;
+        }
+        ::slotted(unauthorized-button) {
+          background-color: green;
+        }
+      </style>   
+
       <overhide-hub id="demo-hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest=true></overhide-hub>      
 
       <div class="w3-bar w3-border w3-light-grey">
@@ -24,10 +39,11 @@
         </button>
       </div></div>
 
-      <div class="w3-row">
+      <div class="buttons-row w3-row">
         <div class="w3-col s4 w3-center">
           <overhide-appsell hubId="demo-hub" sku="free-feature">
             <span slot="unauthorized-prefix">Login to Use Free Feature</span>
+            <span slot="unauthorized-dollars"></span>
             <span slot="authorized-message">Use Feature</span>
           </overhide-appsell>
         </div>

@@ -20,49 +20,58 @@ import {
 import w3Css from "../../static/w3.css";
 
 const template = html<OverhideAppsell>`
-  <template class="panel ${e => e.orientation}">
-    ${when(e => e.isAuthorized, html<OverhideAppsell>`
-      <slot name="authorized-header">
-      </slot>
-    `)}
-    ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-      <slot name="unauthorized-header">
-      </slot>
-    `)}
-    ${when(e => e.isAuthorized, html<OverhideAppsell>`
-      <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
-        <slot name="authorized-button">
-          <div class="w3-button button-content">
+  <template>
+    <div class="panel ${e => e.orientation}">
+      ${when(e => e.isAuthorized, html<OverhideAppsell>`
+        <slot name="authorized-header">
+        </slot>
+      `)}
+      ${when(e => !e.isAuthorized, html<OverhideAppsell>`
+        <slot name="unauthorized-header">
+        </slot>
+      `)}
+      ${when(e => e.isAuthorized, html<OverhideAppsell>`
+        <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
+          <slot name="authorized-button" class="w3-button w3-blue button-content">
             <slot name="authorized-message"></slot>
-          </div>
-        </slot>
-      </div>
-    `)}
-    ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-      <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
-        <slot name="unauthorized-button">
-          <div class="w3-button button-content">
-            <slot name="unauthorized-prefix"></slot>
-            ${e => e.toDollars(e.topupDollars)}
-            <slot name="unauthorized-postfix"></slot>
-          </div>
-        </slot>
-      </div>
-    `)}
-    ${when(e => e.isAuthorized, html<OverhideAppsell>`
-      <slot name="authorized-footer"></slot>
-    `)}
-    ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-      <slot name="unauthorized-footer"></slot>
-    `)}
+          </slot>
+        </div>
+      `)}
+      ${when(e => !e.isAuthorized, html<OverhideAppsell>`
+        <div class="button ${e => e.isEnabled ? '' : 'disabled'}" @click="${e => e.click()}">
+          <slot name="unauthorized-button" class="w3-button button-content w3-blue">
+            <slot name="unauthorized-prefix"></slot><slot name="unauthorized-dollars">${e => e.toDollars(e.topupDollars)}</slot><slot name="unauthorized-postfix"></slot>
+          </slot>
+        </div>
+      `)}
+      ${when(e => e.isAuthorized, html<OverhideAppsell>`
+        <slot name="authorized-footer"></slot>
+      `)}
+      ${when(e => !e.isAuthorized, html<OverhideAppsell>`
+        <slot name="unauthorized-footer"></slot>
+      `)}
+    </div>
   </template>
 `;
 
 const styles = css`
 ${w3Css}
 
+  :host {
+    display: flex;
+    align-content: stretch;
+    justify-content: stretch;
+    margin: auto;
+    contain: content;
+    text-align: center;    
+    width: 100%;
+    height: 100%;
+  }
+
   .panel {
     display: flex;
+    align-items: stretch;
+    justify-content: center;
   }
 
   .panel.horizontal {
@@ -75,6 +84,8 @@ ${w3Css}
 
   .button {
     cursor: pointer;
+    flex-basis: 100%;
+    flex-grow: 2;    
   }
 
   .button.disabled {
@@ -84,8 +95,9 @@ ${w3Css}
 
   .button-content {
     width: 100%;
+    height: 100%;
+    white-space: inherit;
   }
-
 `;
 
 export enum Orientation {
