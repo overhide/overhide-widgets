@@ -16,6 +16,7 @@ const props = {
 //
 // [1] change the `env` below from 'run' to 'debug' 
 // [2] put a `await stop();` statement in the test's `go` function
+// [3] use `alert('..');` as `console.log('..');` will get eaten up.
 
 const env = props['debug'];
 
@@ -30,10 +31,11 @@ async function go (fn) {
 describe('ledgers.js smoke', function() {
   this.timeout(env.timeout);
 
-  it('finds my-try', async () => {
-    await go(async () => {      
-      const handle = await waitFor (() => document.querySelector("#overhide-widgets-demo my-try#my-try").shadowRoot.querySelector("div > h3"))
-      chai.assert(handle != null);
+  it('finds login widget', async () => {
+    await go(async () => {     
+      const widget = await waitFor(() => document.querySelector("#overhide-widgets-demo overhide-login#login-widget"));
+      const modal = await waitFor(() => widget.shadowRoot.querySelector(".envelope > .modal"));
+      chai.assert(modal != null);
     });
   });
 });

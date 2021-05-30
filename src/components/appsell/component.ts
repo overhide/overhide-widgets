@@ -46,7 +46,7 @@ const styles = css`
 ${w3Css}
 `;
 
-enum Orientation {
+export enum Orientation {
   horizontal = 'horizontal',
   vertical = 'vertical'
 }
@@ -113,6 +113,6 @@ export class OverhideAppsell extends FASTElement {
     this.currentImparter = info.currentImparter;
   }
 
-  go(): void {
+  public go(): void {
   }
 }

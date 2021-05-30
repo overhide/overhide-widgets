@@ -8,6 +8,40 @@
 
 ## Quick Start
 
+## Distributable
+
+> **⚠ Why is it so big?** 
+>
+> We depend on [web3.js](https://github.com/ethereum/web3.js/) which has bloat issues:
+>
+> https://github.com/ChainSafe/web3.js/issues/1178
+>
+> As soon as that gets resolved, this distro will be smaller.
+
+The *overhide-widgets* 'dist' folder contains the distributable artifact.
+
+You'll likely want to [import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) the library along with its dependencies ([ledgers.js](https://www.npmjs.com/package/ledgers.js), [web3.js](https://github.com/ethereum/web3.js/)).
+
+Within your front-end projects; using *npm* simply:  `npm install overhide-widgets --save-prod`.
+
+#### Enabling with Token
+
+APIs abstracted by *overhide-widgets* require a bearer-token.  The `token` (above) is passed in to `enable` the rest of the library's functionality.  `oh$.enable(..)` can be called every so often with a refreshed token.
+
+A token can be retrieved with a `GET /token` call (see https://token.overhide.io/swagger.html).
+
+To retrieve tokens please first register for your own API key at https://token.overhide.io/register.
+
+## CDN
+
+You can include *overhide-widgets* via CDN:
+
+* `https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js`
+
+For a specific version, e.g. version *2.1.4*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.0/dist/overhide-widgets.js`
+
+The widgets can then be used in your DOM and via your framework JavaScript.
+
 ### Local Development
 
 #### Back-End

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/chai/chai.js"></script>
   </head>
 
@@ -25,7 +25,11 @@
       var retry = 0;
       return new Promise((resolve, reject) => {
         const repeatFn = () => {
-          const result = fn();
+          try {
+            var result = fn();
+          } catch (e) {
+          }
+          
           if (result) {
             resolve(result);
             return;
@@ -44,7 +48,7 @@
     }
 
     $(function(){
-      $("#includedContent").load("http://localhost:8099/demo-front-end/index.html"); 
+      $("#includedContent").load("http://localhost:8099/dev-front-end/index.html"); 
     });
 
   </script>

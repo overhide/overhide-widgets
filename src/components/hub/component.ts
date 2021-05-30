@@ -22,14 +22,18 @@ import oh$ from "ledgers.js";
 import w3Css from "../../static/w3.css";
 
 interface CtorNamedParams {
-  isTest?: boolean
+  isTest?: boolean, 
+  apiKey?: string
 }
 @customElement({
   name: "overhide-hub"
 })
 export class OverhideHub extends FASTElement implements IOverhideHub {
   @attr 
-  public isTest?: boolean | null;
+  isTest?: boolean | null;
+
+  @attr
+  apiKey?: string | null; 
 
   // payments object
   @observable 
@@ -123,11 +127,14 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     console.log('my-header is now connected to the DOM');
   };
 
-  public constructor({isTest}: CtorNamedParams = {}) {
+  public constructor({isTest, apiKey}: CtorNamedParams = {}) {
     super();
     this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
     if (isTest) {
       this.isTestChanged(false, isTest);
+    }
+    if (apiKey) {
+      this.apiKeyChanged('', apiKey);
     }
   }
 
@@ -373,6 +380,11 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.init();
   }
 
+  private apiKeyChanged(oldValue: string, newValue: string) {
+    this.apiKey = newValue;
+    this.init();
+  }
+
   // @returns {Currency} 
   private getCurrentCurrency = () => {
     return this.paymentsInfo.currentCurrency;
@@ -468,8 +480,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
    */
   private getToken = async () => {
     const tokenUrl = `https://token.overhide.io/token`;
-    const apiKey = '0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___';
-    const url = `${tokenUrl}?apikey=${apiKey}`;
+    const url = `${tokenUrl}?apikey=${this.apiKey}`;
 
     return fetch(url, {
       method: 'GET'
@@ -487,6 +498,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   // Initialize oh$ listeners.
   private init = () => {
+    if (!this.apiKey) return;
 
     // Ensure oh$ has a token.
     (async () => {
