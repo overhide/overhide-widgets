@@ -368,6 +368,10 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.pingApplicationState();
   }
 
+  public refresh = () => {
+    this.outstandingCache = {};
+  }
+
   // Authenticate for the specific imparter.
   // @param {Imparter} imparter - to set 
   private authenticate = async (imparter: Imparter) => {

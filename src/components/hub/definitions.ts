@@ -178,4 +178,7 @@ export interface IOverhideHub {
   // Sets the login element
   // @param {HTMLElement} element -- the login element
   setLoginElement: (element?: IOverhideLogin | null) => void;
+
+  // Refreshes topup cache to re-fetch new values upon transactions.
+  refresh: () => void;
 }

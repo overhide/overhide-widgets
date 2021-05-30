@@ -27,37 +27,38 @@ import walletIcon from "../../static/icons/wallet.svg";
 import deniedIcon from "../../static/icons/denied.svg";
 import logoutIcon from "../../static/icons/logout.svg";
 import errorIcon from "../../static/icons/error.svg";
+import refreshIcon from "../../static/icons/refresh.svg";
 
 const template = html<OverhideStatus>`
   <div class="input">
-    <div class="panel ${e => e.canGetTransactions ? '' : 'disabled'} ${e => e.error ? 'w3-tooltip' : ''}" @click="${e => e.seeTransactions()}">
+    <div class="panel ${e => e.canGetTransactions ? '' : 'disabled'} ${e => e.error ? 'w3-tooltip' : ''}">
 
       ${when(e => e.error, html<OverhideStatus>`
-        <span class="name svg3">${errorIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${errorIcon}</span>
       `)}
       ${when(e => !e.logo && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${deniedIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${deniedIcon}</span>
       `)}
       ${when(e => e.logo == 'microsoft' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${microsoftIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${microsoftIcon}</span>
       `)}
       ${when(e => e.logo == 'google' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${googleIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${googleIcon}</span>
       `)}
       ${when(e => e.logo == 'wallet' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${walletIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${walletIcon}</span>
       `)}
       ${when(e => e.logo == 'eth' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${ethIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${ethIcon}</span>
       `)}
       ${when(e => e.logo == 'bitcoin' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${bitcoinIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${bitcoinIcon}</span>
       `)}
       ${when(e => e.logo == 'passphrase' && !e.error, html<OverhideStatus>`
-        <span class="name svg3">${passphraseIcon}</span>
+        <span class="name svg3" @click="${e => e.seeTransactions()}">${passphraseIcon}</span>
       `)}
 
-      <div type="button">
+      <div type="button" @click="${e => e.seeTransactions()}">
         <div class="label"><span>&nbsp;${e => e.address}</span></div>
       </div>
       
@@ -67,7 +68,10 @@ const template = html<OverhideStatus>`
         </span>        
       `)}
 
-      <div class="logout svg2 ${e => e.canLogout ? '' : 'disabled'}" @click="${e => e.logout()}">${logoutIcon}</div>
+      <div class="logout svg2 ${e => e.canLogout ? '' : 'disabled'}">
+        <div class="refresh-svg" @click="${e => e.refresh()}">${refreshIcon}</div>
+        <div class="logout-svg" @click="${e => e.logout()}">${logoutIcon}</div>
+      </div>
     </div>
   </div>
 `;
@@ -108,13 +112,23 @@ ${w3Css}
   }    
  
   .panel .logout {
-    right: 1px;
-    position: relative;
-    top: 2px;
+    display: flex;
     min-width: 1.5em;
     text-align: center;
     cursor:pointer;
-  }    
+  }
+
+  .logout-svg {
+    top: 2px;
+    right: 1px;
+    position: relative;
+  }
+
+  .refresh-svg {
+    top: 5px;
+    right: 1px;
+    position: relative;
+  }
 
   .panel .logout.disabled {
     opacity: .5;
@@ -262,6 +276,12 @@ export class OverhideStatus extends FASTElement {
   logout(): void {
     if (this.hub && this.currentImparter && this.canLogout) {
       this.hub.clear(this.currentImparter);
+    }
+  }
+
+  refresh(): void {
+    if (this.hub && this.currentImparter && this.canLogout) {
+      this.hub.refresh();
     }
   }
 
