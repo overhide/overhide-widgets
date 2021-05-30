@@ -59,12 +59,12 @@ const template = html<OverhideBtcManual>`
       <div class="w3-row w3-margin">
         <div class="w3-col s6">
           <div class="input">
-            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isAddressValid}">
+            <input type="submit" class="w3-button w3-blue-grey w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isAddressValid}">
           </div>
         </div>
         <div class="w3-col s6">
           <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address}">
+            <input class="w3-button w3-border w3-border-grey" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.address}">
           </div>
         </div>        
       </div>    

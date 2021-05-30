@@ -51,12 +51,12 @@ const template = html<OverhideOhledger>`
       <div class="w3-row w3-margin">
         <div class="w3-col s6">
           <div class="input">
-            <input class="w3-button w3-blue" type="button" @click="${e => e.generate()}" value="generate new">
+            <input class="w3-button w3-dark-grey" type="button" @click="${e => e.generate()}" value="generate new">
           </div>
         </div>
         <div class="w3-col s6">
           <div class="input">
-            <input class="w3-button w3-border w3-border-blue" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.isKeyValid}">
+            <input class="w3-button w3-border w3-border-grey" type="button" @click="${e => e.showTransactions()}" value="show transactions" :disabled="${e => !e.isKeyValid}">
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ const template = html<OverhideOhledger>`
       <div class="w3-row w3-margin">
         <div class="w3-col s12">
           <div class="input">
-            <input type="submit" class="w3-button w3-green w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isKeyValid}">
+            <input type="submit" class="w3-button w3-blue-grey w3-wide" type="button" value="continue" @click="${e => e.continue()}" :disabled="${e => !e.isKeyValid}">
           </div>
         </div>
       </div>    

@@ -34,12 +34,12 @@ const template = html<OverhideAppsell>`
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-light-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-dark-grey ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getAuthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-light-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-dark-grey ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getUnauthButtonContent()}</div>
         </slot>
       `)}
