@@ -2,15 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/dist/overhide-widgets.js"></script>
   </head>
   <body>
-    <div id="overhide-widgets-demo">
-    </div>
+    <div id="overhide-widgets-demo"></div>
   </body>
   <script>
     $(document).ready(function() {
-      $('#overhide-widgets-demo').load("/demo-front-end/index.html");
+      $('#overhide-widgets-demo').load("/demo-front-end/index.html div#demo-front-end");
     });
   </script>  
 </html>

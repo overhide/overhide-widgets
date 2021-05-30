@@ -6,33 +6,46 @@
     <script src="https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js"></script>
   </head>
   <body>
-    <overhide-hub id="demo-hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest=true></overhide-hub>      
+    <div id="demo-front-end">
+      <overhide-hub id="demo-hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest=true></overhide-hub>      
 
-    <div class="w3-bar w3-border w3-light-grey">
-      <div class="w3-right">
-        <overhide-status hubId="demo-hub"></overhide-status>
-      </div>          
-    </div>
-
-    <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
-
-    <div class="w3-row w3-padding-64"><div class="w3-col s12 w3-center">
-      <button onclick="document.getElementById('login-widget').style.display='block'" 
-              class="w3-button w3-green">
-              Login
-      </button>
-    </div></div>
-
-    <div class="w3-row">
-      <div class="w3-col s4 w3-center">
-        <overhide-appsell hubId="demo-hub"></overhide-appsell>
+      <div class="w3-bar w3-border w3-light-grey">
+        <div class="w3-right">
+          <overhide-status hubId="demo-hub"></overhide-status>
+        </div>          
       </div>
-      <div class="w3-col s4 w3-center">
-        <overhide-appsell hubId="demo-hub"></overhide-appsell>
+
+      <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
+
+      <div class="w3-row w3-padding-64"><div class="w3-col s12 w3-center">
+        <button onclick="document.getElementById('login-widget').style.display='block'" 
+                class="w3-button w3-green">
+                Login
+        </button>
+      </div></div>
+
+      <div class="w3-row">
+        <div class="w3-col s4 w3-center">
+          <overhide-appsell hubId="demo-hub" sku="free-feature">
+            <span slot="unauthorized-prefix">Login to Use Free Feature</span>
+            <span slot="authorized-message">Use Feature</span>
+          </overhide-appsell>
+        </div>
+        <div class="w3-col s4 w3-center">
+          <overhide-appsell hubId="demo-hub" sku="paid-feature">
+            <span slot="unauthorized-prefix">Add Feature (</span>
+            <span slot="unauthorized-postfix">)</span>
+            <span slot="authorized-message">Use Feature</span>
+          </overhide-appsell>
+        </div>
+        <div class="w3-col s4 w3-center">
+          <overhide-appsell hubId="demo-hub" sku="subscribed-feature">
+            <span slot="unauthorized-prefix">Subscribe Feature For 2 Minutes (</span>
+            <span slot="unauthorized-postfix">)</span>
+            <span slot="authorized-message">Use Feature Within 2 Minutes</span>
+          </overhide-appsell>
+        </div>
       </div>
-      <div class="w3-col s4 w3-center">
-        <overhide-appsell hubId="demo-hub"></overhide-appsell>
-      </div>
-    </div>
+    </div>      
   </body>
 </html>
