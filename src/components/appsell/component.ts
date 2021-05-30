@@ -24,28 +24,28 @@ const template = html<OverhideAppsell>`
   <template>
     <div class="panel ${e => e.orientation}">
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-header">
+        <slot name="authorized-header" class="${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-header">
+        <slot name="unauthorized-header" class="${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-blue" ${e => e.isEnabled ? '' : 'disabled'}"  @click="${e => e.click()}">
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getAuthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-blue ${e => e.isEnabled ? '' : 'disabled'}"  @click="${e => e.click()}">
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-blue ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getUnauthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-footer"></slot>
+        <slot name="authorized-footer" class="${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}"></slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-footer"></slot>
+        <slot name="unauthorized-footer" class="${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}"></slot>
       `)}
     </div>
   </template>
@@ -100,6 +100,11 @@ ${w3Css}
   .button-content {
     padding: 1em;
   }
+
+  .noclick {
+    cursor: inherit;
+    pointer-events: none;
+  }
 `;
 
 export enum Orientation {
@@ -148,11 +153,11 @@ export class OverhideAppsell extends FASTElement {
   @attr
   unauthorizedTemplate: string = ' overwrite unauthorizedTemplate attribute';
 
-  @observable
-  topupDollars?: number | null;
+  @attr({ mode: 'boolean' })
+  inhibitLogin: boolean = false;
 
   @observable
-  isEnabled?: boolean | null;
+  topupDollars?: number | null;
 
   @observable
   isAuthorized?: boolean | null;
@@ -248,5 +253,9 @@ export class OverhideAppsell extends FASTElement {
 
   getUnauthButtonContent(): string {
     return this.unauthorizedTemplate.replace(/\$\{topup\}/g, this.toDollars(this.topupDollars));
+  }
+
+  isClickable(): boolean {
+    return this.isAuthorized || !this.inhibitLogin;
   }
 }
