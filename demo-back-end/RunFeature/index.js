@@ -18,13 +18,26 @@ module.exports = async function (context, req) {
   const featureName = req.query.featureName;
   const currency = req.query.currency;
   const address = req.query.address;
+  const isTest = req.query.isTest;
   const message = Buffer.from(req.query.message, 'base64').toString();
   const signature = req.query.signature;
   const to = feesSchedule[featureName].address[currency];
   const costDollars = +feesSchedule[featureName].costDollars;
   const expiryMinutes = +feesSchedule[featureName].expiryMinutes || null;
 
-  const uri = currency === 'ethers' ? 'https://rinkeby.ethereum.overhide.io' : 'https://test.ledger.overhide.io/v1'
+  switch(currency) {
+    case 'ethers':
+      var uri = isTest ? 'https://rinkeby.ethereum.overhide.io' : 'https://ethereum.overhide.io';
+      break;
+    case 'bitcoins':
+      var uri = isTest ? 'https://test.bitcoin.overhide.io' : 'https://bitcoin.overhide.io';
+      break;
+    case 'dollars':
+      var uri = isTest ? 'https://test.ledger.overhide.io/v1' : 'https://ledger.overhide.io/v1';
+      break;
+    default:
+      throw `invalid currency: ${currency}}`;
+  } 
 
   try {
     if (await overhide.isValidOnLedger(uri, address, message, signature)

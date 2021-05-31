@@ -13,6 +13,8 @@ import {
 import {
   Imparter,
   IOverhideAppsell,
+  IOverhideSkuClickedEvent,
+  IOverhideSkuTopupOutstandingEvent,
   IOverhideLogin,
   IOverhideHub,
   NetworkType,
@@ -114,20 +116,6 @@ export enum Orientation {
   vertical = 'vertical'
 }
 
-/**
- * The event sent when an appsell SKU deemed authorized by 
- * overhide is clicked by the user.
- * 
- * Usually safest to route state-changes in response to this
- * event via the back-end, and validate authorizations.
- * 
- * All necessary information to validate is provided in this
- * event.
- */
-export interface OverhideSkuClickedEvent {
-
-}
-
 @customElement({
   name: "overhide-appsell",
   template,
@@ -144,7 +132,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   sku?: string | null;
 
   @attr
-  priceDollars?: number | null;
+  priceDollars?: string | null;
 
   // String to show when component detects fully authorized state.
   @attr
@@ -157,6 +145,18 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   @attr({ mode: 'boolean' })
   inhibitLogin: boolean = false;
+
+  @attr
+  bitcoinAddress?: string | null;
+
+  @attr
+  ethereumAddress?: string | null;
+
+  @attr
+  overhideAddress?: string | null;
+
+  @attr
+  withinMinutes?: string | null;
 
   @observable
   topupDollars?: number | null;
@@ -172,8 +172,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
+  signature?: string | null;
   loginElement?: IOverhideLogin | null;
   isLogedIn: boolean = false
+  lastInfo?: PaymentsInfo | null;
 
   public constructor() {
     super(); 
@@ -196,14 +198,47 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     notifier.subscribe(handler, 'paymentsInfo')
   }
 
-  public click(): void {
+  public async click(): Promise<void> {
     if (!this.inhibitLogin && !this.isAuthorized && this.loginElement && !this.isLogedIn) {
       this.loginElement.open();
       return;
     }
-    if (this.isLogedIn) {
-      
+
+    if (this.isLogedIn && !this.isAuthorized) {
+      if (!this.topupDollars) {
+        console.error(`topup dollars not available`);
+        return;
+      }
+      await this.authorize();
+      return;
     }
+
+    if (!this.lastInfo) {
+      console.error(`no lastInfo`);
+      return;
+    }
+
+    if (!this.currentImparter || this.currentImparter == Imparter.unknown) {
+      console.error(`current imparter not set`);
+      return;
+    }
+
+    if (!this.hub) {
+      console.error(`hub not set`);
+      return;
+    }
+
+    const event: IOverhideSkuClickedEvent = <IOverhideSkuClickedEvent> {
+      sku: this.sku,
+      topup: this.topupDollars,
+      currency: this.lastInfo.currentCurrency,
+      from: this.lastInfo.payerAddress[this.currentImparter],
+      isTest: this.hub?.getNetworkType() == NetworkType.test,
+      message: this.lastInfo.messageToSign[this.currentImparter],
+      signature: this.lastInfo.payerSignature[this.currentImparter],
+      to: this.getAddress()
+    };
+    this.$emit(`overhide-appsell-sku-clicked`, event);
   }
 
   hubIdChanged(oldValue: string, newValue: string) {
@@ -217,13 +252,18 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   connectedCallback() {
     super.connectedCallback();
+
+    this.validate();
     this.wireUpButtonContent();
   };
 
-  paymentInfoChanged(info: PaymentsInfo): void {
+  async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
     this.currentImparter = info.currentImparter;
     this.loginElement = info.loginElement;
     this.isLogedIn = !!info.currentImparter && !!info.payerSignature[info.currentImparter];
+    this.signature = info.payerSignature[info.currentImparter];
+    this.validate();
+    this.isAuthorized = await this.determineAuthorized();
   }
 
   toDollars(what?: number | null): string {
@@ -248,6 +288,45 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     this.wireUpButtonContent();
   }
 
+  skuChanged(oldValue: string, newValue: string) {
+    this.sku = newValue;
+    this.validate();
+    if (this.hub) {
+      this.hub.refresh();
+    }
+  }
+  
+  priceDollarsChanged(oldValue: string, newValue: string) {
+    this.priceDollars = newValue;
+    this.validate();
+    if (this.hub) {
+      this.hub.refresh();
+    }
+  }
+
+  validate() {
+    if (!this.hub) {
+      console.error(`hub not setup on overhide-appsell component with sku ${this.sku}`);
+      return;
+    }
+    if (!this.sku) {
+      this.hub.setError(`overhide-appsell component not provided a sku`);
+      return;
+    }
+    if (!this.priceDollars) {
+      this.hub.setError(`overhide-appsell component with sku ${this.sku} not provided a priceDollars`);
+      return;
+    }
+    if (!!this.withinMinutes) {
+      try {
+        parseInt(this.withinMinutes);
+      } catch (e) {
+        this.hub.setError(`overhide-appsell component with sku ${this.sku} has non-number withinMinutes: ${this.withinMinutes}`);
+        return;          
+      }
+    }
+  }
+
   wireUpButtonContent() {
     const authButton: Node | null = this.authorizedButton && this.authorizedButton.length > 0 ? this.authorizedButton[0] : null;
     if (authButton) {
@@ -260,6 +339,42 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
   }
 
+  getAddress(): string | null {
+    if (!!this.hub && !!this.currentImparter && !!this.signature && !!this.sku && !!this.priceDollars) {
+      switch(this.currentImparter) {
+        case Imparter.btcManual:
+          return this.bitcoinAddress || null;
+        case Imparter.ethWeb3:
+          return this.ethereumAddress || null;
+        default:
+          return this.overhideAddress || null;          
+      }
+    }
+    return null;
+  }
+
+  async determineAuthorized(): Promise<boolean> {
+    const address = this.getAddress();
+    if (!this.hub) {
+      console.error(`no hub`);
+      return false;
+    }
+    if (!address) {
+      this.hub.setError(`allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`);
+      return false;
+    }
+    if (!this.priceDollars || parseFloat(this.priceDollars) == 0) {
+      return true;
+    }
+    this.topupDollars = await this.hub.getOutstanding(parseFloat(this.priceDollars), address, this.withinMinutes ? parseFloat(this.withinMinutes) : null);
+    const event: IOverhideSkuTopupOutstandingEvent = <IOverhideSkuTopupOutstandingEvent> {
+      sku: this.sku,
+      topup: this.topupDollars
+    }
+    this.$emit(`overhide-appsell-topup-outstanding`, event);
+    return this.topupDollars == 0;
+  }
+
   getAuthButtonContent(): string {
     return this.authorizedMessage;;
   }
@@ -270,5 +385,22 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   isClickable(): boolean {
     return this.isAuthorized || !this.inhibitLogin;
+  }
+
+  async authorize(): Promise<void> {
+    const address = this.getAddress();
+    if (!this.hub) {
+      console.error(`no hub`);
+      return;
+    }
+    
+    if (!address) {
+      this.hub.setError(`allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`);
+      return;
+    }
+    if (!this.priceDollars || parseFloat(this.priceDollars) == 0) {
+      return;
+    }
+    await this.hub.topUp(parseFloat(this.priceDollars), address);
   }
 }

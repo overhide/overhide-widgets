@@ -77,6 +77,31 @@ export interface PaymentsInfo {
   loginElement?: IOverhideLogin | null         // the login element
 }
 
+/**
+ * The event sent when an appsell SKU deemed authorized by 
+ * overhide is clicked by the user.
+ * 
+ * Usually safest to route state-changes in response to this
+ * event via the back-end, and validate authorizations.
+ * 
+ * All necessary information to validate is provided in this
+ * event.
+ */
+ export interface IOverhideSkuClickedEvent {
+  sku: string,
+  message: string,
+  signature: string,
+  from: string,
+  to: string,
+  currency: Currency,
+  isTest: boolean
+}
+
+export interface IOverhideSkuTopupOutstandingEvent {
+  sku: string,
+  topup: number
+}
+
 export interface IOverhideAppsell {
   // Set the hub against the login compontnet.
   // An alternative to the `hubId` attribute on the component
@@ -155,7 +180,7 @@ export interface IOverhideHub {
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
   // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
-  getOutstanding: (costInDollars: number, to: string, tallyMinutes: number) => number | null,
+  getOutstanding: (costInDollars: number, to: string, tallyMinutes: number | null) => number | null,
 
   // Do the actual topup to authorize
   // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger

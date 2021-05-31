@@ -257,7 +257,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
   // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
-  public getOutstanding = (costInDollars: number, to: string, tallyMinutes: number): number | null => {
+  public getOutstanding = (costInDollars: number, to: string, tallyMinutes: number | null): number | null => {
     const currency = this.getCurrentCurrency();
     const imparter = this.getCurrentImparter();
     if (currency === Currency.unknown || imparter === Imparter.unknown) throw `unknown current currency/imparter in getOutstanding`;
