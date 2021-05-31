@@ -79,6 +79,17 @@
           </overhide-appsell>
         </div>
       </div>
-    </div>      
+    </div>
+    
+    <script>
+
+      // This is where we listen to authorized users clicking on events when they click a feature button.
+      // We hit the back-end in response to these.
+      // We re-validate authorizations in the back-end.
+      // See /demo-back-end
+      window.addEventListener('overhide-appsell-sku-clicked',(e) => { 
+        console.log(`event :: ${JSON.stringify(e.detail)}`);
+       }, false);
+    </script>
   </body>
 </html>
