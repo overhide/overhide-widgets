@@ -62,7 +62,6 @@ export interface PaymentsInfo {
   enabled: {[which in Imparter]: boolean},  // keyed by (currentImparter || defaultImparter); informs if currency available, e.g. wallet availble
   wallet: {[which in Imparter]: boolean},   // keyed by (currentImparter || defaultImparter); informs of currently used wallet
   isOnLedger: {[which in Imparter]: boolean}, // keyed by (currentImparter || defaultImparter); informs if currently used credentials are on ledger
-  pendingTransaction: {[which in Imparter]: boolean}, // keyed by (currentImparter || defaultImparter); informs amount of currently pending transaction or null
 
   payerAddress: {[which in Imparter]: string | null},            // (out only) payer's public address as set by service
   payerPrivateKey: {[which in Imparter]: string | null},         // payer's private key (receipt code) iff not using wallet, null if using wallet
@@ -74,18 +73,28 @@ export interface PaymentsInfo {
   currentSocial: Social,                    // chosen social provider
   time: Date,                               // just a timestamp for refresh
 
-  loginElement?: IOverhideLogin | null         // the login element
+  loginElement?: IOverhideLogin | null,                     // the login element
+  pendingTransaction: IOverhidePendingTransactionEvent,     // the currently pending transaction, if any (see flag inside)
+
+  skuAuthorizations: {[sku: string]: boolean}               // state of sku authorizations
+  skuComponents: {[sku: string]: IOverhideAppsell}          // component per sku
 }
 
 /**
- * The event sent when an appsell SKU deemed authorized by 
- * overhide is clicked by the user.
+ * Event fired by overhide-appsell as a custom event: "overhide-appsell-sku-clicked"
+ * 
+ * The event fired by an overhide-appsell component when an appsell 
+ * SKU deemed authorized by overhide is clicked by the user.
  * 
  * Usually safest to route state-changes in response to this
  * event via the back-end, and validate authorizations.
  * 
  * All necessary information to validate is provided in this
  * event.
+ * 
+ * Passing the `asOf` timestamp to your back-end is an important optimization.  The overhide 
+ * services already checked these transactions as part of this front-end work.  The `asOf` timestamp
+ * ensures we re-load these resutls from cache and do not get rate-limited in the back-end.
  */
  export interface IOverhideSkuClickedEvent {
   sku: string,
@@ -94,12 +103,44 @@ export interface PaymentsInfo {
   from: string,
   to: string,
   currency: Currency,
-  isTest: boolean
+  isTest: boolean,
+  asOf: string
 }
 
+/**
+ * Event fired by overhide-appsell as a custom event: "overhide-appsell-topup-outstanding"
+ * 
+ * An event fired by an overhide-appsell component when
+ * there was an authorization attempt but insufficient funds
+ * to authorize. 
+ * 
+ * This even contains the outstanind topup funds required.
+ */
 export interface IOverhideSkuTopupOutstandingEvent {
   sku: string,
   topup: number
+}
+
+/**
+ * Event fired by overhide-hub as a custom event: "overhide-hub-sku-authorization-changed"
+ * 
+ * Indicated a change in authorization status.
+ */
+export interface IOverhideSkuAuthorizationChangedEvent {
+  isAuthorized: boolean;
+}
+
+/**
+ * Event fired by overhide-hub as a custom event: "overhide-hub-pending-transaction"
+ * 
+ * Fired when we have a pending transaction.  We're waiting for a transaction to finish.  
+ * 
+ * This should be useful for spinners on custom overhide-appsell components.
+ * 
+ * All overhide-appsell components should spin when a transaction is pending.
+ */
+export interface IOverhidePendingTransactionEvent {
+  isPending: boolean
 }
 
 export interface IOverhideAppsell {
@@ -109,6 +150,12 @@ export interface IOverhideAppsell {
   setHub(hub: IOverhideHub): void;
   
   // Programatically 'click' the appsell widget.
+  //
+  // Will result in the login modal is not logged in.
+  //
+  // If logged in and insufficient funds to authorize, will result in the IOverhideSkuTopupOutstandingEvent.
+  //
+  // If authorized, will result in the IOverhideSkuClickedEvent.
   click(): void;
 }
 
@@ -116,6 +163,10 @@ export interface IOverhideAppsell {
 // as an overlay.
 //
 // Reference available from the PaymentsInfo::loginElement.
+//
+// Emits "overhide-login-open" custom event when modal open.
+//
+// Emits "overhide-login-close" custom event when modal closed.
 export interface IOverhideLogin {
   // Set the hub against the login compontnet.
   // An alternative to the `hubId` attribute on the component
@@ -123,9 +174,13 @@ export interface IOverhideLogin {
   setHub(hub: IOverhideHub): void;
 
   // Close the login modal
+  //
+  // Emits "overhide-login-close" custom event.
   close(): void;
 
   // Open the login modal
+  //
+  // Emits "overhide-login-open" custom event.
   open(): void;
 }
 
@@ -175,17 +230,24 @@ export interface IOverhideHub {
   // @returns {boolean} after checking signature and whether ledger has any transactions (to anyone)
   isAuthenticated: (impater: Imparter) => boolean,
 
+  // Get tally as per current imparter, to a certain address, within a certain time.
+  // @param {string} to - address of recepient
+  // @param {number} minutes - number of minutes to look back (since) on the ledger
+  // @returns {{amount: number | null, asOf: string | null}} balance in dollars, null if not yet known, and as-of timestamp
+  getTally: (to: string, tallyMinutes: number | null) => Promise<{tally: number | null, asOf: string | null}>,
+
   // Get balance outstanding for authorization as per current currency.
   // @param {number} costInDollars - amount expected to tally (in dollars or ethers)
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
-  // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
-  getOutstanding: (costInDollars: number, to: string, tallyMinutes: number | null) => number | null,
+  // @returns {{delta: number | null, asOf: string | null}} differnce in dollars, $0 if authorized, null if not yet known, and as-of timestamp
+  getOutstanding: (costInDollars: number, to: string, tallyMinutes: number | null) => Promise<{delta: number | null, asOf: string | null}>,
 
   // Do the actual topup to authorize
   // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger
-  // @param {} toAddress - to pay
-  topUp: (amountDollars: number, toAddress: string) => void
+  // @param {string} toAddress - to pay
+  // @returns {Promise<boolean>} with status of topup -- successful or not.
+  topUp: (amountDollars: number, toAddress: string) => Promise<boolean>,
 
   // Get URL for imparter
   // @param {Imparter} imparter - to set 
@@ -206,4 +268,28 @@ export interface IOverhideHub {
 
   // Refreshes topup cache to re-fetch new values upon transactions.
   refresh: () => void;
+
+  // Sets the SKU as authorized
+  //
+  // Fires "overhide-hub-sku-authorization-changed" with IOverhideSkuAuthorizationChangedEvent payload if the authorization 
+  // state has changed for this sku.
+  //
+  // @param {string} sku -- to set
+  // @param {boolean} authorized -- authorized or not?
+  setSkuAuthorized: (sku: string, authorized: boolean) => void;
+
+  // Is the SKU authorized?
+  //
+  // @param {string} sku -- to check
+  isSkuAuthorized: (sku: string) => boolean;
+
+  // Sets the component for a SKU
+  //
+  // @param {string} sku -- to set
+  // @param {IOverhideAppsell} component -- to set
+  setComponentForSku: (sku: string, component: IOverhideAppsell) => void;
+
+  // @param {string} sku -- to check
+  // @returns {IOverhideAppsell} the component, if any
+  getComponentForSku: (sku: string) => IOverhideAppsell | null;
 }

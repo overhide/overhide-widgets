@@ -291,7 +291,7 @@ export class OverhideStatus extends FASTElement {
   }
 
   seeTransactions() {
-    if (this.hub && this.address && this.currentImparter) {
+    if (this.hub && this.address && this.currentImparter && !this.error) {
       switch (this.currentImparter) {
         case Imparter.ohledger:
         case Imparter.ohledgerWeb3:

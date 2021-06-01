@@ -14,7 +14,10 @@ import {
   IOverhideLogin,
   Imparter,
   Social,
+  IOverhideAppsell,
   IOverhideHub,
+  IOverhidePendingTransactionEvent,
+  IOverhideSkuAuthorizationChangedEvent,
   PaymentsInfo,
   NetworkType
 } from './definitions';
@@ -67,14 +70,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       ohledger: false,
       unknown: false
     },
-    pendingTransaction: {
-      "btc-manual": false,
-      "eth-web3": false,
-      "ohledger-social": false,
-      "ohledger-web3": false,
-      ohledger: false,
-      unknown: false
-    },
 
     payerAddress: {
       "btc-manual": null,
@@ -110,6 +105,10 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     },
 
     loginElement: null,
+    pendingTransaction: <IOverhidePendingTransactionEvent> {isPending: false},
+
+    skuAuthorizations: {},
+    skuComponents: {},
 
     time: new Date()
   };
@@ -123,7 +122,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   private allowNetworkType: NetworkType = NetworkType.prod;
 
   // cache of outstanding results
-  private outstandingCache: {[key: string]: number} = {};
+  private tallyCache: {[key: string]: Promise<{tally: number | null, asOf: string | null}>} = {};
 
   connectedCallback() {
     super.connectedCallback();
@@ -163,7 +162,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   public setCurrentImparter = async (imparter: Imparter): Promise<boolean> => {
     const oldInfo = {...this.paymentsInfo};
     try {
-      this.outstandingCache = {}; // reset outstanding cache
+      this.tallyCache = {}; // reset outstanding cache
       this.paymentsInfo.currentImparter = imparter;
       this.paymentsInfo.currentCurrency = CURRENCY_BY_IMPARTER[imparter];
 
@@ -252,93 +251,122 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     return this.paymentsInfo.isOnLedger[imparter];
   }  
 
-  // Get balance outstanding for authorization as per current currency.
-  // @param {number} costInDollars - amount expected to tally (in dollars or ethers)
+  // Get tally as per current imparter, to a certain address, within a certain time.
   // @param {string} to - address of recepient
   // @param {number} minutes - number of minutes to look back (since) on the ledger
-  // @returns {number} differnce in dollars, $0 if authorized, null if not yet known.
-  public getOutstanding = (costInDollars: number, to: string, tallyMinutes: number | null): number | null => {
+  // @returns {{amount: number | null, asOf: string | null}} balance in dollars, null if not yet known, and as-of timestamp
+  public getTally = async (to: string, tallyMinutes: number | null): Promise<{tally: number | null, asOf: string | null}> => {
     const currency = this.getCurrentCurrency();
     const imparter = this.getCurrentImparter();
+    console.log(`JTN :: getTally(${to}, ${tallyMinutes})`);
     if (currency === Currency.unknown || imparter === Imparter.unknown) throw `unknown current currency/imparter in getOutstanding`;
-    const key = `${imparter}_${costInDollars}_${to}_${tallyMinutes}`;
-    console.log(`#getOutstanding(${key}) = ${this.outstandingCache[key]}`);
-    if (key in this.outstandingCache) {
-      return this.outstandingCache[key];
+    const key = this.getKey(imparter, to, tallyMinutes);
+    console.log(`JTN getTally cache(${key}) = ${this.tallyCache[key]}`);
+    if (key in this.tallyCache) {
+      return this.tallyCache[key];
     }
-    delete this.outstandingCache[key]; // for re-requests
-    (async () => {
+    this.tallyCache[key] = new Promise<{tally: number | null, asOf: string | null}>(async (resolve) => {
       const oldInfo = {...this.paymentsInfo};
       try {
         let tally;
+        let asOf;
         const creds = await oh$.getCredentials(imparter);
         if (!creds || !creds.address) {
-          this.outstandingCache[key] = costInDollars;
-          this.pingApplicationState();
-          return;
+          console.log(`JTN getTally no creds`);
+          resolve({tally: null, asOf: null});
         };
         if (tallyMinutes) {
           let since = new Date();
           since.setMinutes(since.getMinutes() - tallyMinutes);
-          tally = await oh$.getTallyDollars(imparter, { address: to }, since);
+          const result = await oh$.getTallyDollars(imparter, { address: to }, since);
+          tally = result['tally'];
+          asOf = result['as-of'];
         } else {
-          tally = await oh$.getTallyDollars(imparter, { address: to }, null);
+          const result = await oh$.getTallyDollars(imparter, { address: to }, null);
+          tally = result['tally'];
+          asOf = result['as-of'];
         } 
-        
-        var delta = costInDollars - tally;
-        delta = delta < 0 ? 0 : delta;
-        this.outstandingCache[key] = delta;
-        this.pingApplicationState();
+        console.log(`JTN getTally done cache(${key}) = ${this.tallyCache[key]}`);
+        resolve({tally, asOf});
       } catch (error) {
         this.paymentsInfo = {...oldInfo};
         this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
-      }  
-    })();
-    return null;
+        console.log(`JTN getTally error: ${this.error}`);
+        resolve({tally: null, asOf: null});
+      }    
+    });
+    return this.tallyCache[key];
+  }
+
+  // Get balance outstanding for authorization as per current currency.
+  // @param {number} costInDollars - amount expected to tally (in dollars or ethers)
+  // @param {string} to - address of recepient
+  // @param {number} minutes - number of minutes to look back (since) on the ledger
+  // @returns {{delta: number | null, asOf: string | null}} differnce in dollars, $0 if authorized, null if not yet known, and as-of timestamp
+  public getOutstanding = async (costInDollars: number, to: string, tallyMinutes: number | null): Promise<{delta: number | null, asOf: string | null}> => {
+    let {tally, asOf} = await this.getTally(to, tallyMinutes);
+
+    if (!tally) {
+      return {delta: null, asOf: null};
+    }
+        
+    var delta = costInDollars - tally;
+    delta = delta < 0 ? 0 : delta;
+    console.log(`JTN getOutstanding(${costInDollars}, ${to}, ${tallyMinutes}): {${delta}, ${asOf}}`);
+
+    return {delta: delta, asOf: asOf};
   }
 
   // Do the actual topup to authorize
   // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger
   // @param {} toAddress - to pay
-  public topUp = async (amountDollars: number, toAddress: string) => {
-    const currency = this.getCurrentCurrency();
+  public topUp = async (amountDollars: number, toAddress: string): Promise<boolean> => {
     const imparter = this.getCurrentImparter();
     const oldInfo = {...this.paymentsInfo};
     try {
-      const wallet = this.paymentsInfo.wallet[imparter];
-        const amount = await oh$.getFromDollars(imparter, amountDollars);
-      this.paymentsInfo.pendingTransaction[imparter] = amount;
-      let aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
-      let before = await oh$.getTally(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before
+      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: true};
+      this.$emit('overhide-hub-pending-transaction', this.paymentsInfo.pendingTransaction);
+      const amount = amountDollars == 0 ? amountDollars : await oh$.getFromDollars(imparter, amountDollars);
+      const aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
+      if (amount > 0) {
+        var before = await oh$.getTallyDollars(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before
+      }
       let options = this.paymentsInfo.payerSignature[imparter] && this.paymentsInfo.messageToSign[imparter] && {
           message: this.paymentsInfo.messageToSign[imparter], 
           signature: this.paymentsInfo.payerSignature[imparter]
         };
-      await oh$.createTransaction(imparter, amount, toAddress, options);
+      const result = await oh$.createTransaction(imparter, amount, toAddress, options);
       if (amount > 0) {
-        for (var i = 0; i < 12; i++) {
-          let now = await oh$.getTally(imparter, { address: toAddress }, aDayAgo); // ... we take a sample now
-          if (now > before) break;                                          // ... and exit out as soon as decentralized
-                                                                            //     ledger is consistent between the wallet's
-                                                                            //     node and ledgers.js node
-          await this.delay(5000);                                                // ... else wait 5 seconds
+        for (var i = 0; i < 15; i++) {
+          let now = await oh$.getTallyDollars(imparter, { address: toAddress }, aDayAgo); // ... we take a sample now
+          if (now.tally || 0 > before.tally || 0) break;                           // ... and exit out as soon as decentralized
+                                                                                   //     ledger is consistent between the wallet's
+                                                                                   //     node and ledgers.js node
+          if (imparter != Imparter.btcManual) {
+            await this.delay(5000);                                                // ... else wait 5 seconds
+          } else {
+            await this.delay(65000);
+          }
         }  
       }
-      this.paymentsInfo.pendingTransaction[imparter] = false;
-      this.paymentsInfo.isOnLedger[imparter] = true;      
-      this.outstandingCache = {}; // reset outstanding cache
-      this.pingApplicationState();
+      this.paymentsInfo.isOnLedger[imparter] = result;      
+      this.refresh();
+      return result;
     } catch (error) {
       this.paymentsInfo = {...oldInfo};
-      this.paymentsInfo.pendingTransaction[imparter] = false;
       this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+      return false;
+    } finally {
+      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: false};
+      this.$emit('overhide-hub-pending-transaction', this.paymentsInfo.pendingTransaction);
+      this.pingApplicationState();
     }
   }
 
   // Clear credentials and wallet if problem
   public clear = (imparter: Imparter) => {
     console.log(`JTN clear :: ${JSON.stringify({imparter})}`);
-    this.outstandingCache = {};
+    this.tallyCache = {};
     this.paymentsInfo.enabled[imparter] = false;
     delete this.paymentsInfo.wallet[imparter];
     this.paymentsInfo.payerAddress[imparter] = null;
@@ -348,6 +376,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.paymentsInfo.isOnLedger[imparter] = false;
     this.paymentsInfo.currentImparter = Imparter.unknown;
     this.paymentsInfo.currentCurrency = Currency.unknown;
+    this.paymentsInfo.skuAuthorizations = {};
     if (imparter == Imparter.ohledgerSocial && !!this.paymentsInfo.currentImparter && this.paymentsInfo.currentImparter != Imparter.unknown) {
       oh$.setCredentials(null);
     }
@@ -369,13 +398,50 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   }
 
   public refresh = () => {
-    this.outstandingCache = {};
+    this.tallyCache = {};
   }
 
+  public setSkuAuthorized = (sku: string, authorized: boolean) => {
+    if (sku in this.paymentsInfo.skuAuthorizations) {
+      if (this.paymentsInfo.skuAuthorizations[sku] == authorized) {
+        return;
+      }      
+    }
+    this.paymentsInfo.skuAuthorizations[sku] = authorized;
+    const event: IOverhideSkuAuthorizationChangedEvent = <IOverhideSkuAuthorizationChangedEvent> {isAuthorized: authorized};
+    this.$emit("overhide-hub-sku-authorization-changed", event);
+  }
+
+  public isSkuAuthorized = (sku: string): boolean => {
+    if (sku in this.paymentsInfo.skuAuthorizations) {
+      return this.paymentsInfo.skuAuthorizations[sku];
+    }    
+    return false;
+  }
+
+  public setComponentForSku = (sku: string, component: IOverhideAppsell) => {
+    if (sku in this.paymentsInfo.skuComponents) {
+      console.warn(`sku ${sku} already has a component set, resetting`);
+    }
+
+    this.paymentsInfo.skuComponents[sku] = component;
+  }
+
+  public getComponentForSku = (sku: string): IOverhideAppsell | null => {
+    if (sku in this.paymentsInfo.skuComponents) {
+      return this.paymentsInfo.skuComponents[sku];
+    }
+    return null;
+  }
+
+  private getKey(imparter: Imparter, to: string, tallyMinutes: number | null): string {
+    return `${imparter}_${to}_${tallyMinutes}`;    
+  }
+  
   // Authenticate for the specific imparter.
   // @param {Imparter} imparter - to set 
   private authenticate = async (imparter: Imparter) => {
-    this.outstandingCache = {}; // reset outstanding cache
+    this.tallyCache = {}; // reset outstanding cache
     if ((!this.paymentsInfo.payerSignature[imparter]
           || !this.paymentsInfo.messageToSign[imparter])) {
       console.log(`JTN sign :: ${imparter}`);
@@ -385,7 +451,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       message: this.paymentsInfo.messageToSign[imparter], 
       signature: this.paymentsInfo.payerSignature[imparter]
     };
-    await this.isOnLedger(imparter, options)  ;
+    await this.isOnLedger(imparter, options);
   }
 
   private isTestChanged(oldValue: boolean, newValue: boolean) {
@@ -595,7 +661,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     });
 
     oh$.addEventListener('onWalletChange', async (e: any) => {
-      this.outstandingCache = {};
+      this.tallyCache = {};
       this.pingApplicationState();
     });
 

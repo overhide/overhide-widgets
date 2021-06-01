@@ -134,6 +134,17 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @attr
   priceDollars?: string | null;
 
+  // If this attribute is specified, the component will act as a login button.
+  //
+  // All other attribtues except for hubId and orientation are ignored.
+  //
+  // When customizing this component as a login button, only the unauthorized slots need modifying:
+  // - unauthorized-header
+  // - unauthorized-button
+  // - unauthorized-footer
+  @attr
+  loginMessage?: string | null;
+
   // String to show when component detects fully authorized state.
   @attr
   authorizedMessage: string = 'overwrite authorizedMessage attribute';
@@ -161,8 +172,12 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @observable
   topupDollars?: number | null;
 
+  // Flags whether this sku is authorized.
   @observable
-  isAuthorized?: boolean | null;
+  public isAuthorized?: boolean | null;
+
+  @observable
+  asOf?: string | null;
 
   @observable 
   authorizedButton?: Node[];
@@ -194,18 +209,25 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
         } 
       }
     }
-
-    notifier.subscribe(handler, 'paymentsInfo')
+    
+    notifier.subscribe(handler, 'paymentsInfo');
+    if (this.sku) {
+      this.hub?.setComponentForSku(this.sku, this);
+    }    
   }
 
   public async click(): Promise<void> {
-    if (!this.inhibitLogin && !this.isAuthorized && this.loginElement && !this.isLogedIn) {
+    if (this.loginElement && (this.loginMessage || (!this.inhibitLogin && !this.isLogedIn))) {
       this.loginElement.open();
       return;
     }
 
+    if (this.loginMessage) {
+      return; // this is just a login button, no further actions.
+    }
+
     if (this.isLogedIn && !this.isAuthorized) {
-      if (!this.topupDollars) {
+      if (this.topupDollars == undefined || this.topupDollars == null) {
         console.error(`topup dollars not available`);
         return;
       }
@@ -236,7 +258,8 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
       isTest: this.hub?.getNetworkType() == NetworkType.test,
       message: this.lastInfo.messageToSign[this.currentImparter],
       signature: this.lastInfo.payerSignature[this.currentImparter],
-      to: this.getAddress()
+      to: this.getToAddress(),
+      asOf: this.asOf
     };
     this.$emit(`overhide-appsell-sku-clicked`, event);
   }
@@ -258,12 +281,21 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   };
 
   async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
+    this.lastInfo = info;
     this.currentImparter = info.currentImparter;
     this.loginElement = info.loginElement;
     this.isLogedIn = !!info.currentImparter && !!info.payerSignature[info.currentImparter];
     this.signature = info.payerSignature[info.currentImparter];
     this.validate();
-    this.isAuthorized = await this.determineAuthorized();
+
+    this.isAuthorized = false;
+    this.topupDollars = parseFloat(this.priceDollars || "0");
+    if (!this.loginMessage && this.currentImparter && this.currentImparter != Imparter.unknown) {
+      try {
+        this.isAuthorized = await this.determineAuthorized();
+      } catch (e) {
+      } 
+    }
   }
 
   toDollars(what?: number | null): string {
@@ -290,7 +322,6 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   skuChanged(oldValue: string, newValue: string) {
     this.sku = newValue;
-    this.validate();
     if (this.hub) {
       this.hub.refresh();
     }
@@ -298,7 +329,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   
   priceDollarsChanged(oldValue: string, newValue: string) {
     this.priceDollars = newValue;
-    this.validate();
+    this.topupDollars = parseFloat(newValue);
     if (this.hub) {
       this.hub.refresh();
     }
@@ -306,22 +337,25 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   validate() {
     if (!this.hub) {
-      console.error(`hub not setup on overhide-appsell component with sku ${this.sku}`);
+      console.warn(`hub not setup on overhide-appsell component with sku ${this.sku}`);
       return;
     }
+    if (this.loginMessage) {
+      return; // no other validations.
+    }
     if (!this.sku) {
-      this.hub.setError(`overhide-appsell component not provided a sku`);
+      console.error(`overhide-appsell component not provided a sku`);
       return;
     }
     if (!this.priceDollars) {
-      this.hub.setError(`overhide-appsell component with sku ${this.sku} not provided a priceDollars`);
+      console.error(`overhide-appsell component with sku ${this.sku} not provided a priceDollars`);
       return;
     }
     if (!!this.withinMinutes) {
       try {
         parseInt(this.withinMinutes);
       } catch (e) {
-        this.hub.setError(`overhide-appsell component with sku ${this.sku} has non-number withinMinutes: ${this.withinMinutes}`);
+        console.error(`overhide-appsell component with sku ${this.sku} has non-number withinMinutes: ${this.withinMinutes}`);
         return;          
       }
     }
@@ -339,8 +373,8 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
   }
 
-  getAddress(): string | null {
-    if (!!this.hub && !!this.currentImparter && !!this.signature && !!this.sku && !!this.priceDollars) {
+  getToAddress(): string | null {
+    if (!!this.currentImparter) {
       switch(this.currentImparter) {
         case Imparter.btcManual:
           return this.bitcoinAddress || null;
@@ -353,20 +387,51 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     return null;
   }
 
+  getAuthButtonContent(): string {
+    return this.loginMessage ? this.loginMessage : this.authorizedMessage;;
+  }
+
+  getUnauthButtonContent(): string {
+    return this.loginMessage ? this.loginMessage : this.unauthorizedTemplate.replace(/\$\{topup\}/g, this.toDollars(this.topupDollars));
+  }
+
+  isClickable(): boolean {
+    return this.isAuthorized || !this.inhibitLogin || !!this.loginMessage;
+  }
+
+  // @throws 
   async determineAuthorized(): Promise<boolean> {
-    const address = this.getAddress();
+    const address = this.getToAddress();
     if (!this.hub) {
       console.error(`no hub`);
-      return false;
+      throw `no hub`;
     }
+
+    if (!this.lastInfo) {
+      console.error(`no lastInfo`);
+      throw `no lastInfo`;
+    }
+    
     if (!address) {
-      this.hub.setError(`allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`);
-      return false;
+      const message = `allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`;
+      console.error(message);
+      throw message;
     }
-    if (!this.priceDollars || parseFloat(this.priceDollars) == 0) {
-      return true;
+    if (!this.priceDollars) {
+      var price: number = 0;
+    } else {
+      var price: number = parseFloat(this.priceDollars);
     }
-    this.topupDollars = await this.hub.getOutstanding(parseFloat(this.priceDollars), address, this.withinMinutes ? parseFloat(this.withinMinutes) : null);
+
+    if (price == 0) {    
+      this.topupDollars = 0;  
+      return this.lastInfo.isOnLedger[this.currentImparter || Imparter.unknown];
+    }
+
+    const result = await this.hub.getOutstanding(price, address, this.withinMinutes ? parseFloat(this.withinMinutes) : null);
+    this.topupDollars = result.delta;
+    this.asOf = result.asOf;
+
     const event: IOverhideSkuTopupOutstandingEvent = <IOverhideSkuTopupOutstandingEvent> {
       sku: this.sku,
       topup: this.topupDollars
@@ -375,32 +440,15 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     return this.topupDollars == 0;
   }
 
-  getAuthButtonContent(): string {
-    return this.authorizedMessage;;
-  }
-
-  getUnauthButtonContent(): string {
-    return this.unauthorizedTemplate.replace(/\$\{topup\}/g, this.toDollars(this.topupDollars));
-  }
-
-  isClickable(): boolean {
-    return this.isAuthorized || !this.inhibitLogin;
-  }
-
-  async authorize(): Promise<void> {
-    const address = this.getAddress();
-    if (!this.hub) {
-      console.error(`no hub`);
-      return;
+  async authorize(): Promise<boolean> {
+    try {
+      const isAuthorized = await this.determineAuthorized();
+      const address = this.getToAddress();
+      if (this.hub && address && !isAuthorized) {
+        return await this.hub.topUp(this.topupDollars || 0, address);
+      }
+    } catch (e) {
     }
-    
-    if (!address) {
-      this.hub.setError(`allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`);
-      return;
-    }
-    if (!this.priceDollars || parseFloat(this.priceDollars) == 0) {
-      return;
-    }
-    await this.hub.topUp(parseFloat(this.priceDollars), address);
+    return false;
   }
 }
