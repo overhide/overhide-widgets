@@ -12,6 +12,7 @@ import {
 import {
   Imparter,
   IOverhideHub,
+  IOverhideStatus,
   NetworkType,
   PaymentsInfo,
   Social
@@ -167,7 +168,7 @@ ${w3Css}
   template,
   styles,
 })
-export class OverhideStatus extends FASTElement {
+export class OverhideStatus extends FASTElement implements IOverhideStatus {
   @attr 
   hubId?: string;
 
@@ -275,6 +276,7 @@ export class OverhideStatus extends FASTElement {
 
   logout(): void {
     if (this.hub && this.currentImparter && this.canLogout) {
+      this.hub.logout();
       this.hub.clear(this.currentImparter);
     }
   }

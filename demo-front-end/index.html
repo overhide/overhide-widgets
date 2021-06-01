@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <script src="https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js"></script>
+    <script src="./index.js"></script>
   </head>
 
   <body>
@@ -23,7 +24,17 @@
           background-color: #333333;
           color: white;
         }
+        .visa {
+          position: fixed;
+          top: 0px;
+          right: 0px;
+          z-index: 50;
+          opacity: 0;
+          transition: opacity 1s ease-in 1s;
+          pointer-events: none;
+        }
       </style>
+      <img class="visa" id="visa" src="/demo-front-end/visa.png">
 
       <overhide-hub id="demo-hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest=true></overhide-hub>      
 
@@ -75,7 +86,7 @@
             sku="subscribed-feature"
             priceDollars="3"
             authorizedMessage="Use Feature"
-            unauthorizedTemplate="Subscribe Feature For 2 Minutes ($${topup})"
+            unauthorizedTemplate="Subscribe Feature For 30 Minutes ($${topup})"
             bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
@@ -84,21 +95,5 @@
         </div>
       </div>
     </div>
-    
-    <script>
-
-      // This is where we listen to authorized users clicking on events when they click a feature button.
-      // We hit the back-end in response to these.
-      // We re-validate authorizations in the back-end.
-      // See /demo-back-end
-      window.addEventListener('overhide-appsell-sku-clicked',(e) => { 
-        console.log(`event :: ${JSON.stringify(e.detail)}`);
-       }, false);
-
-       console.log('debug');
-       document.querySelector('#foo').addEventListener('overhide-appsell-sku-clicked', (e) => { 
-        console.log(`event DEBUG :: ${JSON.stringify(e.detail)}`);
-       }, false);
-    </script>
   </body>
 </html>

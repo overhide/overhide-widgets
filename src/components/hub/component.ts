@@ -105,7 +105,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     },
 
     loginElement: null,
-    pendingTransaction: <IOverhidePendingTransactionEvent> {isPending: false},
+    pendingTransaction: <IOverhidePendingTransactionEvent> {isPending: false, currency: null},
 
     skuAuthorizations: {},
     skuComponents: {},
@@ -324,7 +324,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     const imparter = this.getCurrentImparter();
     const oldInfo = {...this.paymentsInfo};
     try {
-      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: true};
+      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: true, currency: this.paymentsInfo.currentCurrency};
       this.$emit('overhide-hub-pending-transaction', this.paymentsInfo.pendingTransaction);
       const amount = amountDollars == 0 ? amountDollars : await oh$.getFromDollars(imparter, amountDollars);
       const aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
@@ -357,7 +357,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
       return false;
     } finally {
-      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: false};
+      this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: false, currency: this.paymentsInfo.currentCurrency};
       this.$emit('overhide-hub-pending-transaction', this.paymentsInfo.pendingTransaction);
       this.pingApplicationState();
     }
@@ -376,6 +376,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.paymentsInfo.isOnLedger[imparter] = false;
     this.paymentsInfo.currentImparter = Imparter.unknown;
     this.paymentsInfo.currentCurrency = Currency.unknown;
+    this.paymentsInfo.currentSocial = Social.unknown;
     this.paymentsInfo.skuAuthorizations = {};
     if (imparter == Imparter.ohledgerSocial && !!this.paymentsInfo.currentImparter && this.paymentsInfo.currentImparter != Imparter.unknown) {
       oh$.setCredentials(null);
@@ -432,6 +433,12 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       return this.paymentsInfo.skuComponents[sku];
     }
     return null;
+  }
+
+  public logout = (): void => {
+    if (this.paymentsInfo.currentImparter == Imparter.ohledgerSocial) {
+      oh$.setCredentials(Imparter.ohledgerSocial, null);
+    }
   }
 
   private getKey(imparter: Imparter, to: string, tallyMinutes: number | null): string {

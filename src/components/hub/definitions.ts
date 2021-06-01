@@ -140,11 +140,13 @@ export interface IOverhideSkuAuthorizationChangedEvent {
  * All overhide-appsell components should spin when a transaction is pending.
  */
 export interface IOverhidePendingTransactionEvent {
-  isPending: boolean
+  isPending: boolean;
+  currency: string | null;
 }
 
+// Represents any of the overhide-appsell components.
 export interface IOverhideAppsell {
-  // Set the hub against the login compontnet.
+  // Set the hub against the login component.
   // An alternative to the `hubId` attribute on the component
   // @param {IOverhideHub} hub -- the hub to set
   setHub(hub: IOverhideHub): void;
@@ -153,14 +155,15 @@ export interface IOverhideAppsell {
   //
   // Will result in the login modal is not logged in.
   //
-  // If logged in and insufficient funds to authorize, will result in the IOverhideSkuTopupOutstandingEvent.
+  // If logged in and insufficient funds to authorize, will result in the 
+  // IOverhideSkuTopupOutstandingEvent.
   //
   // If authorized, will result in the IOverhideSkuClickedEvent.
   click(): void;
 }
 
-// Represents the one login component sitting in your DOM ready to be displayed at fixed coordiantes
-// as an overlay.
+// Represents the one login component sitting in your DOM ready to be 
+// displayed at fixed coordiantes as an overlay.
 //
 // Reference available from the PaymentsInfo::loginElement.
 //
@@ -168,7 +171,7 @@ export interface IOverhideAppsell {
 //
 // Emits "overhide-login-close" custom event when modal closed.
 export interface IOverhideLogin {
-  // Set the hub against the login compontnet.
+  // Set the hub against the login component.
   // An alternative to the `hubId` attribute on the component
   // @param {IOverhideHub} hub -- the hub to set
   setHub(hub: IOverhideHub): void;
@@ -182,6 +185,14 @@ export interface IOverhideLogin {
   //
   // Emits "overhide-login-open" custom event.
   open(): void;
+}
+
+// Represents the overhide-status component.
+export interface IOverhideStatus {
+  // Set the hub against the login component.
+  // An alternative to the `hubId` attribute on the component
+  // @param {IOverhideHub} hub -- the hub to set
+  setHub(hub: IOverhideHub): void;
 }
 
 // Represents the one non-visible hub component that controls all the activity.  
@@ -292,4 +303,7 @@ export interface IOverhideHub {
   // @param {string} sku -- to check
   // @returns {IOverhideAppsell} the component, if any
   getComponentForSku: (sku: string) => IOverhideAppsell | null;
+
+  // Logout of the current impater, if possible.
+  logout: () => void;
 }
