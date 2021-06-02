@@ -24,7 +24,7 @@ const template = html<OverhideOhledger>`
   <div class="panel w3-panel w3-border w3-round-xxlarge ${e => e.isActive ? 'active' : ''}">
     <div class="w3-row w3-margin">
       <div class="w3-col s6 w3-left-align">
-        <span class="name svg3">${passphraseIcon} passphrase login</span>
+        <span class="name svg3">${passphraseIcon} secret token</span>
       </div>
       <div class="currency-span w3-col s6 w3-right-align">
         <span class="currency w3-text-dark-grey">dollars</span>
@@ -42,9 +42,9 @@ const template = html<OverhideOhledger>`
           <div class="input">
             <div class="clipboard">
               <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isKeyValid}">${clipboardIcon}</div>
-              <input autocomplete="passphrase" name="passphrase" id="passphrase" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
+              <input autocomplete="token" name="token" id="token" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
             </div>
-            <label>passphrase</label>
+            <label>secret token</label>
           </div>
         </div>
       </div>
@@ -171,12 +171,12 @@ export class OverhideOhledger extends FASTElement {
 
   setNormalMessage() {
     this.messageClass = 'normalMessage';
-    this.message = html`Login with a passphrase &mdash; Remember this passphrase &mdash; You will need it for future logins &mdash; Keep this passphrase safe in password manager`;
+    this.message = html`Login with a secret token &mdash; Remember this token &mdash; You will need it for future logins &mdash; Keep this token safe in password manager`;
   }
 
   setInvalidMessage() {
     this.messageClass = 'invalidMessage';
-    this.message = html`The passphrase must be a 64 characters '0x' prefixed hexadecimal value &mdash; <b>Easiest to just generate</b>`;
+    this.message = html`The secret token must be a 64 characters '0x' prefixed hexadecimal value &mdash; <b>Easiest to just generate</b>`;
   }
 
   copyToClipboard() {
