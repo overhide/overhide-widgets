@@ -2,7 +2,7 @@ import {
   customElement,
   FASTElement,
   html,
-  css,
+  ref,
   attr,
   observable
 } from "@microsoft/fast-element";
@@ -25,16 +25,20 @@ import {
 import oh$ from "ledgers.js";
 import w3Css from "../../static/w3.css";
 
+const template = html<OverhideHub>`<template ${ref('rootElement')}></template>`
+
+// These must be specified if the hub is not connected to the DOM.
 interface CtorNamedParams {
-  isTest?: boolean, 
-  apiKey?: string
+  isTest: boolean, 
+  apiKey: string
 }
 @customElement({
-  name: "overhide-hub"
+  name: "overhide-hub",
+  template
 })
 export class OverhideHub extends FASTElement implements IOverhideHub {
-  @attr 
-  isTest?: boolean | null;
+  @attr({ mode: 'boolean' })
+  isTest?: boolean | null = false;
 
   @attr
   apiKey?: string | null; 
@@ -117,26 +121,48 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   @observable 
   public error?: string | null;
 
+  rootElement?: HTMLElement;
+
   public readonly THIS_IS_OVERHIDE_HUB: boolean = true;
 
   private allowNetworkType: NetworkType = NetworkType.prod;
-
+  private isWiredUp = false;
+  
   // cache of outstanding results
   private tallyCache: {[key: string]: Promise<{tally: number | null, asOf: string | null}>} = {};
 
   connectedCallback() {
     super.connectedCallback();
-    console.log('my-header is now connected to the DOM');
+    this.isWiredUp = true;
+    if (this.rootElement?.hasAttribute('isTest')) {
+      this.isTestChanged(false, true);
+    }
+    if (this.rootElement?.hasAttribute('apiKey')) {
+      this.apiKeyChanged('', this.rootElement.getAttribute('apiKey') || '');
+    }
+
+    const fromStorage = window.sessionStorage.getItem('paymentsInfo');
+    console.log(`JTN :: from storage ${fromStorage}`);
+    if (fromStorage) {
+      this.paymentsInfo = JSON.parse(fromStorage);
+    }
+
+    this.pingApplicationState();
   };
 
-  public constructor({isTest, apiKey}: CtorNamedParams = {}) {
+  // @param {CtorNamedParams?} constructor params, must be defined if this hub is not connected to the DOM.
+  public constructor(params: CtorNamedParams | undefined) {
     super();
-    this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
-    if (isTest) {
-      this.isTestChanged(false, isTest);
-    }
-    if (apiKey) {
-      this.apiKeyChanged('', apiKey);
+    if (params) {
+      this.isWiredUp = true;
+      const {isTest, apiKey} = params;
+      this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
+      if (isTest) {
+        this.isTestChanged(false, isTest);
+      }
+      if (apiKey) {
+        this.apiKeyChanged('', apiKey);
+      }  
     }
   }
 
@@ -170,15 +196,17 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         await this.authenticate(imparter);
       }
       this.pingApplicationState();
+      sessionStorage.setItem('paymentsInfo', JSON.stringify({...this.paymentsInfo, skuComponents: null, loginElement: null}));
       return true;
     }
     catch (e) 
     {
       this.paymentsInfo = {...oldInfo};
       this.error = e;
-      if (e === 'user close') {
+      if (e == 'user close') {
         return true; // cancel
       }
+      sessionStorage.removeItem('paymentsInfo');
       return false;
     }
   }
@@ -240,7 +268,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       }
     } catch (error) {
       this.paymentsInfo = {...oldInfo};
-      this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+      this.error = `${typeof error == 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
@@ -290,7 +318,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         resolve({tally, asOf});
       } catch (error) {
         this.paymentsInfo = {...oldInfo};
-        this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+        this.error = `${typeof error == 'object' && 'message' in error ? error.message : error}`;
         console.log(`JTN getTally error: ${this.error}`);
         resolve({tally: null, asOf: null});
       }    
@@ -354,7 +382,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       return result;
     } catch (error) {
       this.paymentsInfo = {...oldInfo};
-      this.error = `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+      this.error = `${typeof error == 'object' && 'message' in error ? error.message : error}`;
       return false;
     } finally {
       this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: false, currency: this.paymentsInfo.currentCurrency};
@@ -378,6 +406,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.paymentsInfo.currentCurrency = Currency.unknown;
     this.paymentsInfo.currentSocial = Social.unknown;
     this.paymentsInfo.skuAuthorizations = {};
+    sessionStorage.removeItem('paymentsInfo');
     if (imparter == Imparter.ohledgerSocial && !!this.paymentsInfo.currentImparter && this.paymentsInfo.currentImparter != Imparter.unknown) {
       oh$.setCredentials(null);
     }
@@ -462,11 +491,13 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   }
 
   private isTestChanged(oldValue: boolean, newValue: boolean) {
+    if (!this.isWiredUp) return;
     this.allowNetworkType = newValue ? NetworkType.test : NetworkType.prod;
     this.init();
   }
 
   private apiKeyChanged(oldValue: string, newValue: string) {
+    if (!this.isWiredUp) return;
     this.apiKey = newValue;
     this.init();
   }
@@ -497,7 +528,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         this.paymentsInfo.isOnLedger[imparter] = true;
       }
     } catch (error) {
-      throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+      throw `${typeof error == 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
@@ -515,7 +546,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     } catch (error) {
       console.log(`JTN error sign :: ${error}`);
       this.setSignature(imparter, null, null);
-      throw `${typeof error === 'object' && 'message' in error ? error.message : error}`;
+      throw `${typeof error == 'object' && 'message' in error ? error.message : error}`;
     }
   }
 
@@ -600,7 +631,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       switch (imparter) {
         case Imparter.ethWeb3:
           if (e.isPresent) {
-            if (NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter] === network.name) {
+            if (NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter] == network.name) {
               this.setImparterEnabled(imparter, true);
               this.setWallet(imparter, e.isPresent);
               await this.setCredentials(imparter, credentials.address, null);
@@ -629,6 +660,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     // No wallet for dollars in this example.
     oh$.addEventListener('onNetworkChange', async (e: any) => {
       const imparter: Imparter = e.imparterTag;
+      console.log(`JTN :: !! ${NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]}`);
       switch (imparter) {
         case Imparter.ethWeb3:
         case Imparter.btcManual:
@@ -644,7 +676,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         case Imparter.ohledgerSocial:
           if ('currency' in e
             && 'mode' in e
-            && `${e.currency}:${e.mode}` === NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]) {
+            && `${e.currency}:${e.mode}` == NETWORKS_BY_IMPARTER[this.allowNetworkType][imparter]) {
             this.setImparterEnabled(imparter, true);
             break;
           }

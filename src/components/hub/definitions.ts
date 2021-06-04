@@ -43,7 +43,7 @@ export const NETWORKS_BY_IMPARTER: {[which in NetworkType]: {[what in Imparter]:
     'eth-web3': 'rinkeby',
     'ohledger': 'USD:test',
     'ohledger-web3': 'USD:test',
-    'ohledger-social': 'USD;test',
+    'ohledger-social': 'USD:test',
     'btc-manual': 'test',
     unknown: ''
   },

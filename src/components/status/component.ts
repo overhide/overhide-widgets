@@ -229,6 +229,7 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
+    console.log(`JTN :: info: ${JSON.stringify(info.payerSignature, null, 2)}`);
     this.error = null;
     this.currentImparter = info.currentImparter;
     this.address = info.payerAddress[info.currentImparter] || 'no sign-in';
