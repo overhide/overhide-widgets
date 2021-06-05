@@ -59,7 +59,6 @@ export const NETWORKS_BY_IMPARTER: {[which in NetworkType]: {[what in Imparter]:
 
 // The structure shared by the hub to all the components in the system.
 export interface PaymentsInfo {
-  enabled: {[which in Imparter]: boolean},  // keyed by (currentImparter || defaultImparter); informs if currency available, e.g. wallet availble
   wallet: {[which in Imparter]: boolean},   // keyed by (currentImparter || defaultImparter); informs of currently used wallet
   isOnLedger: {[which in Imparter]: boolean}, // keyed by (currentImparter || defaultImparter); informs if currently used credentials are on ledger
 
@@ -278,7 +277,8 @@ export interface IOverhideHub {
   setLoginElement: (element?: IOverhideLogin | null) => void;
 
   // Refreshes topup cache to re-fetch new values upon transactions.
-  refresh: () => void;
+    // @param {Imparter} imparter -- which imparter to refresh for
+  refresh: (imparter: Imparter | null) => void;
 
   // Sets the SKU as authorized
   //

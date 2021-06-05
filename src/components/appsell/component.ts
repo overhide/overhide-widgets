@@ -23,6 +23,7 @@ import {
 } from '../hub/definitions';
 
 import w3Css from "../../static/w3.css";
+import loadingCss from "../../static/loading.css";
 
 const template = html<OverhideAppsell>`
   <template>
@@ -36,12 +37,12 @@ const template = html<OverhideAppsell>`
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-dark-grey ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getAuthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-dark-grey ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
           <div class="button-content">${e => e.getUnauthButtonContent()}</div>
         </slot>
       `)}
@@ -57,6 +58,7 @@ const template = html<OverhideAppsell>`
 
 const styles = css`
 ${w3Css}
+${loadingCss}
 
   :host {
     display: flex;
@@ -185,6 +187,9 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @observable 
   unauthorizedButton?: Node[];  
 
+  @observable
+  loading: boolean = false;
+
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
   signature?: string | null;
@@ -292,9 +297,12 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     this.topupDollars = parseFloat(this.priceDollars || "0");
     if (!this.loginMessage && this.currentImparter && this.currentImparter != Imparter.unknown) {
       try {
+        this.loading = true;
         this.isAuthorized = await this.determineAuthorized();
       } catch (e) {
-      } 
+      } finally {
+        this.loading = false;
+      }
     }
   }
 
@@ -323,7 +331,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   skuChanged(oldValue: string, newValue: string) {
     this.sku = newValue;
     if (this.hub) {
-      this.hub.refresh();
+      this.hub.refresh(null);
     }
   }
   
@@ -331,7 +339,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     this.priceDollars = newValue;
     this.topupDollars = parseFloat(newValue);
     if (this.hub) {
-      this.hub.refresh();
+      this.hub.refresh(null);
     }
   }
 
@@ -442,12 +450,15 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   async authorize(): Promise<boolean> {
     try {
+      this.loading = true;
       const isAuthorized = await this.determineAuthorized();
       const address = this.getToAddress();
       if (this.hub && address && !isAuthorized) {
         return await this.hub.topUp(this.topupDollars || 0, address);
       }
     } catch (e) {
+    } finally {
+      this.loading = false;
     }
     return false;
   }

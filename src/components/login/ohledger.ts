@@ -42,7 +42,7 @@ const template = html<OverhideOhledger>`
           <div class="input">
             <div class="clipboard">
               <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isKeyValid}">${clipboardIcon}</div>
-              <input autocomplete="token" name="token" id="token" class="w3-input" type="text" :value="${e => e.key}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
+              <input autocomplete="token" name="token" id="token" class="w3-input" type="text" :value="${e => e.key || ''}" @change="${(e,c) => e.changeKey(c.event)}" @keyup="${(e,c) => e.changeKey(c.event)}">
             </div>
             <label>secret token</label>
           </div>
@@ -145,13 +145,17 @@ export class OverhideOhledger extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.key = info.payerPrivateKey[Imparter.ohledger];
     this.address = info.payerAddress[Imparter.ohledger];
     this.isActive = info.currentImparter === Imparter.ohledger;
+
+    if (info.payerPrivateKey[Imparter.ohledger] != this.key) {
+      this.changeKey({target: {value: info.payerPrivateKey[Imparter.ohledger]}});
+    }    
   }
 
   async changeKey(event: any) {
     this.key = event.target.value;
+    this.isKeyValid = false;
     this.setNormalMessage();
     if (this.hub && this.key) {
       this.isKeyValid = (/^0x[0-9a-fA-F]{64}$/.test(this.key)) && await this.hub.setSecretKey(Imparter.ohledger, this.key);

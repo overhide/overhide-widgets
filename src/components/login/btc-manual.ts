@@ -43,7 +43,7 @@ const template = html<OverhideBtcManual>`
           <div class="input">
             <div class="clipboard">
               <div class="clickable svg2" @click="${e => e.copyToClipboard()}" :disabled="${e => !e.isAddressValid}">${clipboardIcon}</div>
-              <input autocomplete="account" name="account" id="account" class="w3-input" type="text" :value="${e => e.address}" @change="${(e,c) => e.changeAddress(c.event)}" @keyup="${(e,c) => e.changeAddress(c.event)}">
+              <input autocomplete="account" name="account" id="account" class="w3-input" type="text" :value="${e => e.address || ''}" @change="${(e,c) => e.changeAddress(c.event)}" @keyup="${(e,c) => e.changeAddress(c.event)}">
             </div>
             <label>bitcoin address</label>
           </div>
@@ -136,12 +136,16 @@ export class OverhideBtcManual extends FASTElement {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    this.address = info.payerAddress[Imparter.btcManual];
     this.isActive = info.currentImparter === Imparter.btcManual;
+
+    if (info.payerAddress[Imparter.btcManual] != this.address) {
+      this.changeAddress({target: {value: info.payerAddress[Imparter.btcManual]}});
+    }
   }
 
   async changeAddress(event: any) {
     this.address = event.target.value;
+    this.isAddressValid = false;
     this.setNormalMessage();
     if (this.hub && this.address) {
       this.isAddressValid = await this.hub.setAddress(Imparter.btcManual, this.address);
