@@ -333,6 +333,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // Do the actual topup to authorize
   // @param {number} amountDollars - amount to topup in US dollars, can be 0 to just create a free transaction for getting on ledger
   // @param {} toAddress - to pay
+  // @returns {Promise<boolean>} with status of topup -- successful or not.
   public topUp = async (amountDollars: number, toAddress: string): Promise<boolean> => {
     const imparter = this.getCurrentImparter();
     const oldInfo = {...this.paymentsInfo};

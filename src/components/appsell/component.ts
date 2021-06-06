@@ -240,11 +240,14 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
 
     if (this.isLogedIn && !this.isAuthorized) {
-      if (!this.topupDollars) {
+      if (this.topupDollars == undefined) {
         console.log(`in click(): sku:${this.sku} topup dollars not available`);
         return;
       }
       await this.authorize();
+    }
+
+    if (!this.isLogedIn || !this.isAuthorized) {
       return;
     }
 
@@ -516,6 +519,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     return this.topupDollars == 0;
   }
 
+  // @returns {Promise<boolean>} with status of topup -- successful or not.
   async authorize(): Promise<boolean> {
     try {
       this.loading = true;
