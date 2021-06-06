@@ -4,8 +4,24 @@
 // See /demo-back-end
 window.addEventListener('overhide-appsell-sku-clicked',(e) => { 
   console.log(`sku-clicked :: ${JSON.stringify(e.detail, null, 2)}`);
+  let message = null;
 
-  document.querySelector('#messages').innerHtml = `<div class="w3-panel w3-blue"><p>foo</p></div>`;
+  switch (e.detail.sku) {
+    case 'free-feature':
+      message = `${new Date()} &mdash; <b>free</b> feature used`;
+      break;
+    case 'paid-feature':
+      message = `${new Date()} &mdash; <b>paid</b> feature used`;
+      break;
+    case 'subscribed-feature':
+      message = `${new Date()} &mdash; <b>subscribed</b> feature used`;
+      break;
+  }
+
+  const messages = document.querySelector('#messages').innerHTML;
+  const newMessage = `<div class="w3-panel w3-pale-green w3-display-container"><span onclick="this.parentElement.style.display='none'"
+  class="w3-button w3-display-topright">X</span><p>${message}</p></div>` + messages;
+  document.querySelector('#messages').innerHTML = newMessage;
 }, false);
 
 // This event fires whenever we're asked to topup funds.

@@ -189,6 +189,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         await this.authenticate(imparter);
       }
       this.pingApplicationState();
+      console.log(`JTN :: set ${JSON.stringify(this.paymentsInfo.isOnLedger, null, 2)}`);
       sessionStorage.setItem('paymentsInfo', JSON.stringify({...this.paymentsInfo, skuComponents: null, loginElement: null}));
       return true;
     }
@@ -365,6 +366,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       }
       this.paymentsInfo.isOnLedger[imparter] = result;      
       this.refresh(imparter);
+      this.setCurrentImparter(imparter);
       return result;
     } catch (error) {
       this.paymentsInfo = {...oldInfo};
@@ -613,6 +615,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     const fromStorage = window.sessionStorage.getItem('paymentsInfo');
     if (fromStorage) {
       this.paymentsInfo = JSON.parse(fromStorage);
+      console.log(`JTN :: init ${JSON.stringify(this.paymentsInfo.isOnLedger, null, 2)}`);
       if (this.paymentsInfo.currentImparter) {
         switch (this.paymentsInfo.currentImparter) {
           case Imparter.ohledgerSocial:
