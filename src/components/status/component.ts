@@ -12,6 +12,7 @@ import {
 import {
   Imparter,
   IOverhideHub,
+  IOverhideLogin,
   IOverhideStatus,
   NetworkType,
   PaymentsInfo,
@@ -32,34 +33,36 @@ import refreshIcon from "../../static/icons/refresh.svg";
 
 const template = html<OverhideStatus>`
   <div class="input">
-    <div class="panel ${e => e.canGetTransactions ? '' : 'disabled'} ${e => e.error ? 'w3-tooltip' : ''}">
+    <div class="panel ${e => e.error ? 'w3-tooltip' : ''}">
+      <div class="${e => e.canGetTransactions ? '' : 'disabled'}">
 
-      ${when(e => e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${errorIcon}</span>
-      `)}
-      ${when(e => !e.logo && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${deniedIcon}</span>
-      `)}
-      ${when(e => e.logo == 'microsoft' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${microsoftIcon}</span>
-      `)}
-      ${when(e => e.logo == 'google' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${googleIcon}</span>
-      `)}
-      ${when(e => e.logo == 'wallet' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${walletIcon}</span>
-      `)}
-      ${when(e => e.logo == 'eth' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${ethIcon}</span>
-      `)}
-      ${when(e => e.logo == 'bitcoin' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${bitcoinIcon}</span>
-      `)}
-      ${when(e => e.logo == 'passphrase' && !e.error, html<OverhideStatus>`
-        <span class="name svg3" @click="${e => e.seeTransactions()}">${passphraseIcon}</span>
-      `)}
+        ${when(e => e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${errorIcon}</span>
+        `)}
+        ${when(e => !e.logo && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${deniedIcon}</span>
+        `)}
+        ${when(e => e.logo == 'microsoft' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${microsoftIcon}</span>
+        `)}
+        ${when(e => e.logo == 'google' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${googleIcon}</span>
+        `)}
+        ${when(e => e.logo == 'wallet' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${walletIcon}</span>
+        `)}
+        ${when(e => e.logo == 'eth' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${ethIcon}</span>
+        `)}
+        ${when(e => e.logo == 'bitcoin' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${bitcoinIcon}</span>
+        `)}
+        ${when(e => e.logo == 'passphrase' && !e.error, html<OverhideStatus>`
+          <span class="name svg3" @click="${e => e.addressClicked()}">${passphraseIcon}</span>
+        `)}
+      </div>
 
-      <div type="button" @click="${e => e.seeTransactions()}">
+      <div type="button" @click="${e => e.addressClicked()}">
         <div class="label"><span>&nbsp;${e => e.address}</span></div>
       </div>
       
@@ -89,7 +92,7 @@ ${w3Css}
     display: flex;
   }
 
-  .panel.disabled {
+  .panel .disabled {
     opacity: .5;
     cursor: default;
   }
@@ -179,7 +182,7 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
   logo?: string | null;
 
   @observable
-  address?: string | null = 'no sign-in';
+  address?: string | null = 'sign-in';
 
   @observable
   canLogout?: boolean | null;
@@ -189,6 +192,8 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
 
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
+  isSignedIn: boolean = false;
+  loginElement?: IOverhideLogin | null;
 
   public constructor() {
     super(); 
@@ -232,7 +237,9 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
 
     this.error = null;
     this.currentImparter = info.currentImparter;
-    this.address = info.payerSignature[info.currentImparter] ? info.payerAddress[info.currentImparter] : 'no sign-in';
+    this.isSignedIn = !!info.payerSignature[info.currentImparter];
+    this.address = this.isSignedIn ? info.payerAddress[info.currentImparter] : 'sign-in';
+    this.loginElement = info.loginElement;
     this.canLogout = false;
     this.canGetTransactions = false;
     this.logo = null;   
@@ -296,8 +303,11 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
     this.address = 'problem';
   }
 
-  seeTransactions() {
-    if (this.hub && this.address && this.currentImparter && !this.error) {
+  addressClicked() {
+    if (this.hub && !this.isSignedIn && !!this.loginElement) {
+      this.loginElement.open();
+    } 
+    if (this.hub && this.isSignedIn && this.currentImparter && !this.error) {
       switch (this.currentImparter) {
         case Imparter.ohledger:
         case Imparter.ohledgerWeb3:
