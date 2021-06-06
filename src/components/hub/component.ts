@@ -266,7 +266,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // @param {Imparter} imparter - to set 
   // @returns {boolean} after checking signature and whether ledger has any transactions (to anyone)
   public isAuthenticated = (imparter: Imparter) => {
-    return this.paymentsInfo.isOnLedger[imparter];
+    return this.paymentsInfo.isOnLedger[imparter] && !!this.paymentsInfo.payerSignature[imparter];
   }  
 
   // Get tally as per current imparter, to a certain address, within a certain time.
@@ -281,7 +281,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     if (key in this.tallyCache) {
       return this.tallyCache[key];
     }
-    console.log(`JTN getTally(${key} := ${key in this.tallyCache})`);
     this.tallyCache[key] = new Promise<{tally: number | null, asOf: string | null}>(async (resolve) => {
       const oldInfo = {...this.paymentsInfo};
       try {
@@ -309,8 +308,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         resolve({tally: null, asOf: null});
       }    
     });
-    console.log(`JTN getTally(${key}) := ${this.tallyCache[key]}`);
-    console.log(`JTN getTally(${key}) := ${JSON.stringify(this.tallyCache, null, 2)}`);
     return this.tallyCache[key];
   }
 
@@ -380,7 +377,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   // Clear credentials and wallet if problem
   public clear = (imparter: Imparter) => {
-    console.log(`JTN clear`);
     this.refresh(null);
     delete this.paymentsInfo.wallet[imparter];
     this.paymentsInfo.payerAddress[imparter] = null;
@@ -426,7 +422,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     } else {
       this.tallyCache = {};
     }
-    console.log(`JTN refresh(${imparter}) := ${JSON.stringify(this.tallyCache, null, 2)}`);    
   }
 
   public setSkuAuthorized = (sku: string, authorized: boolean) => {
@@ -475,7 +470,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   // Authenticate for the specific imparter.
   // @param {Imparter} imparter - to set 
   private authenticate = async (imparter: Imparter) => {
-    console.log(`JTN auth`);
     this.refresh(imparter); // reset outstanding cache
     if ((!this.paymentsInfo.payerSignature[imparter]
           || !this.paymentsInfo.messageToSign[imparter])) {
@@ -712,7 +706,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     });
 
     oh$.addEventListener('onWalletChange', async (e: any) => {
-      console.log(`JTN wallet change :: ${JSON.stringify(e, null, 2)}`);
       this.refresh(e.imparterTag as Imparter);
       this.pingApplicationState();
     });

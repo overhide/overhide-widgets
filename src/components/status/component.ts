@@ -229,51 +229,52 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-    console.log(`JTN :: info: ${JSON.stringify(info.payerSignature, null, 2)}`);
-    console.log(`JTN :: info: ${JSON.stringify(info.payerAddress, null, 2)}`);
 
     this.error = null;
     this.currentImparter = info.currentImparter;
-    this.address = info.payerAddress[info.currentImparter] || 'no sign-in';
+    this.address = info.payerSignature[info.currentImparter] ? info.payerAddress[info.currentImparter] : 'no sign-in';
     this.canLogout = false;
     this.canGetTransactions = false;
-    switch (info.currentImparter) {
-      case Imparter.ohledgerSocial:
-        switch (info.currentSocial) {
-          case Social.microsoft:
-            this.logo = 'microsoft';
-            this.canLogout = true;
-            this.canGetTransactions = true;
-            break;
-          case Social.google:
-            this.logo = 'google';
-            this.canLogout = true;
-            this.canGetTransactions = true;
-            break;
-          default:
-            this.logo = null;            
-        }
-        break;
-      case Imparter.ohledgerWeb3:
-        this.logo = 'wallet';
-        this.canGetTransactions = true;
-        break;
-      case Imparter.ethWeb3:
-        this.logo = 'eth';
-        this.canGetTransactions = true;
-        break;
-      case Imparter.btcManual:
-        this.logo = 'bitcoin';
-        this.canLogout = true;
-        this.canGetTransactions = true;
-        break;
-      case Imparter.ohledger:
-        this.logo = 'passphrase';
-        this.canLogout = true;
-        this.canGetTransactions = true;
-        break;
-      default:
-        this.logo = null;
+    this.logo = null;   
+    if (info.payerSignature[info.currentImparter]) {
+      switch (info.currentImparter) {
+        case Imparter.ohledgerSocial:
+          switch (info.currentSocial) {
+            case Social.microsoft:
+              this.logo = 'microsoft';
+              this.canLogout = true;
+              this.canGetTransactions = true;
+              break;
+            case Social.google:
+              this.logo = 'google';
+              this.canLogout = true;
+              this.canGetTransactions = true;
+              break;
+            default:
+              this.logo = null;            
+          }
+          break;
+        case Imparter.ohledgerWeb3:
+          this.logo = 'wallet';
+          this.canGetTransactions = true;
+          break;
+        case Imparter.ethWeb3:
+          this.logo = 'eth';
+          this.canGetTransactions = true;
+          break;
+        case Imparter.btcManual:
+          this.logo = 'bitcoin';
+          this.canLogout = true;
+          this.canGetTransactions = true;
+          break;
+        case Imparter.ohledger:
+          this.logo = 'passphrase';
+          this.canLogout = true;
+          this.canGetTransactions = true;
+          break;
+        default:
+          this.logo = null;
+      }  
     }
   }
 

@@ -37,13 +37,13 @@ const template = html<OverhideAppsell>`
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
-        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
-          <div class="button-content">${e => e.getAuthButtonContent()}</div>
+        <slot name="authorized-button" ${slotted('authorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading ? 'loading' : ''} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+          <div class="button-content ${e => e.loading ? 'dim' : ''}">${e => e.getAuthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => !e.isAuthorized, html<OverhideAppsell>`
-        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
-          <div class="button-content">${e => e.getUnauthButtonContent()}</div>
+        <slot name="unauthorized-button" ${slotted('unauthorizedButton')} class="button w3-button w3-dark-grey ${e => e.loading ? 'loading' : ''} ${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
+          <div class="button-content ${e => e.loading ? 'dim' : ''}">${e => e.getUnauthButtonContent()}</div>
         </slot>
       `)}
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
@@ -105,6 +105,10 @@ ${loadingCss}
 
   .button-content {
     padding: 1em;
+  }
+
+  .dim {
+    opacity: .2;
   }
 
   .noclick {
@@ -286,6 +290,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   };
 
   async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
+    console.log(JSON.stringify({...info, loginElement: null, skuComponents: null}));
     this.lastInfo = info;
     this.currentImparter = info.currentImparter;
     this.loginElement = info.loginElement;
@@ -420,6 +425,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
       throw `no lastInfo`;
     }
     
+    if (!this.signature) {
+      return false;
+    }
+
     if (!address) {
       const message = `allowed user to log in with $${this.currentImparter} but overhide-appsell component with sku ${this.sku} doesn't have an address setup for that ledger`;
       console.error(message);

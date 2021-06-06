@@ -129,7 +129,7 @@ export class OverhideEthWeb3 extends FASTElement {
     if (this.address) {
       this.setNormalMessage();
     }
-    this.isActive = info.currentImparter === Imparter.ethWeb3;
+    this.isActive = info.currentImparter === Imparter.ethWeb3 && !!info.payerSignature[info.currentImparter];
     this.hasWallet = info.wallet[Imparter.ethWeb3];
   }
 
