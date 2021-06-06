@@ -290,7 +290,6 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   };
 
   async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
-    console.log(JSON.stringify({...info, loginElement: null, skuComponents: null}));
     this.lastInfo = info;
     this.currentImparter = info.currentImparter;
     this.loginElement = info.loginElement;

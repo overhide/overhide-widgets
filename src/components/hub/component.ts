@@ -422,6 +422,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     } else {
       this.tallyCache = {};
     }
+    this.pingApplicationState();
   }
 
   public setSkuAuthorized = (sku: string, authorized: boolean) => {
