@@ -211,9 +211,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       this.paymentsInfo.messageToSign[Imparter.ohledgerSocial] = null;
       this.paymentsInfo.isOnLedger[Imparter.ohledgerSocial] = false;
       this.paymentsInfo.currentSocial = social;
-      await oh$.setCredentials(Imparter.ohledgerSocial, {provider: social});
-      this.pingApplicationState();  
     }
+
+    await oh$.setCredentials(Imparter.ohledgerSocial, {provider: social, address: this.paymentsInfo.payerAddress[Imparter.ohledgerSocial]});
   }
 
   // Sets credentials secret key for non-wallet workflow

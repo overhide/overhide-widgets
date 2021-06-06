@@ -218,7 +218,6 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
       handleChange(source: any, propertyName: string) {
         switch (propertyName) {
           case 'paymentsInfo':
-            console.log(`JTN handleChange ${that.sku} ${source.paymentsInfo.ordinal}`);
             that.paymentInfoChanged(source.paymentsInfo);
             break;
         } 
@@ -241,7 +240,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
 
     if (this.isLogedIn && !this.isAuthorized) {
-      if (this.topupDollars == undefined || this.topupDollars == null) {
+      if (!this.topupDollars) {
         console.log(`in click(): sku:${this.sku} topup dollars not available`);
         return;
       }
@@ -364,7 +363,6 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
           this.loading = false;
         }
       }
-      console.log(`JTN ?? ${this.sku} ${this.isLogedIn} ${this.isAuthorized} ${this.lastInfo.ordinal}`);
     });
   }
 
