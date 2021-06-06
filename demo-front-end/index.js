@@ -4,6 +4,8 @@
 // See /demo-back-end
 window.addEventListener('overhide-appsell-sku-clicked',(e) => { 
   console.log(`sku-clicked :: ${JSON.stringify(e.detail, null, 2)}`);
+
+  document.querySelector('#messages').innerHtml = `<div class="w3-panel w3-blue"><p>foo</p></div>`;
 }, false);
 
 // This event fires whenever we're asked to topup funds.
@@ -14,3 +16,5 @@ window.addEventListener('overhide-hub-pending-transaction',(e) => {
     document.querySelector("#visa").style.opacity = e.detail.isPending ? "1" : "0";
   }
 }, false);
+
+

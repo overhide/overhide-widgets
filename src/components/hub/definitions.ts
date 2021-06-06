@@ -70,7 +70,7 @@ export interface PaymentsInfo {
   currentImparter: Imparter,                // chosen payment imparter
   currentCurrency: Currency,                // chosen payment currency, either 'dollars', 'ethers', or null
   currentSocial: Social,                    // chosen social provider
-  time: Date,                               // just a timestamp for refresh
+  ordinal: number,                          // ordinal of refresh
 
   loginElement?: IOverhideLogin | null,                     // the login element
   pendingTransaction: IOverhidePendingTransactionEvent,     // the currently pending transaction, if any (see flag inside)
@@ -183,7 +183,9 @@ export interface IOverhideLogin {
   // Open the login modal
   //
   // Emits "overhide-login-open" custom event.
-  open(): void;
+  //
+  // @returns {Promise} to await until closed.
+  open(): Promise<void>;
 }
 
 // Represents the overhide-status component.

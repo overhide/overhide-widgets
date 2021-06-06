@@ -6,6 +6,7 @@ import {
   attr,
   observable,
   Observable,
+  ref,
   slotted,
   when
 } from "@microsoft/fast-element";
@@ -21,12 +22,13 @@ import {
   PaymentsInfo,
   Social
 } from '../hub/definitions';
-
+import {Mutex} from 'async-mutex';
+ 
 import w3Css from "../../static/w3.css";
 import loadingCss from "../../static/loading.css";
 
 const template = html<OverhideAppsell>`
-  <template>
+  <template ${ref('rootElement')}>
     <div class="panel ${e => e.orientation}">
       ${when(e => e.isAuthorized, html<OverhideAppsell>`
         <slot name="authorized-header" class="${e => e.isClickable() ? '' : 'noclick'}"  @click="${e => e.isClickable() && e.click()}">
@@ -194,12 +196,15 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @observable
   loading: boolean = false;
 
+  rootElement?: HTMLElement;
   hub?: IOverhideHub | null; 
   currentImparter?: Imparter | null;
   signature?: string | null;
   loginElement?: IOverhideLogin | null;
   isLogedIn: boolean = false
   lastInfo?: PaymentsInfo | null;
+  isInited: boolean = false;
+  mutex = new Mutex();
 
   public constructor() {
     super(); 
@@ -213,6 +218,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
       handleChange(source: any, propertyName: string) {
         switch (propertyName) {
           case 'paymentsInfo':
+            console.log(`JTN handleChange ${that.sku} ${source.paymentsInfo.ordinal}`);
             that.paymentInfoChanged(source.paymentsInfo);
             break;
         } 
@@ -227,8 +233,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   public async click(): Promise<void> {
     if (this.loginElement && (this.loginMessage || (!this.inhibitLogin && !this.isLogedIn))) {
-      this.loginElement.open();
-      return;
+      await this.loginElement.open();
     }
 
     if (this.loginMessage) {
@@ -237,7 +242,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
     if (this.isLogedIn && !this.isAuthorized) {
       if (this.topupDollars == undefined || this.topupDollars == null) {
-        console.error(`topup dollars not available`);
+        console.log(`in click(): sku:${this.sku} topup dollars not available`);
         return;
       }
       await this.authorize();
@@ -245,17 +250,17 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
 
     if (!this.lastInfo) {
-      console.error(`no lastInfo`);
+      console.log(`in click(): sku:${this.sku} no lastInfo`);
       return;
     }
 
     if (!this.currentImparter || this.currentImparter == Imparter.unknown) {
-      console.error(`current imparter not set`);
+      console.log(`in click(): sku:${this.sku} current imparter not set`);
       return;
     }
 
     if (!this.hub) {
-      console.error(`hub not set`);
+      console.log(`in click(): sku:${this.sku} hub not set`);
       return;
     }
 
@@ -284,30 +289,83 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
 
   connectedCallback() {
     super.connectedCallback();
-
+    
+    this.init();
     this.validate();
     this.wireUpButtonContent();
   };
 
-  async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
-    this.lastInfo = info;
-    this.currentImparter = info.currentImparter;
-    this.loginElement = info.loginElement;
-    this.isLogedIn = !!info.currentImparter && !!info.payerSignature[info.currentImparter];
-    this.signature = info.payerSignature[info.currentImparter];
-    this.validate();
+  init() {
+    this.isInited = true;
 
-    this.isAuthorized = false;
-    this.topupDollars = parseFloat(this.priceDollars || "0");
-    if (!this.loginMessage && this.currentImparter && this.currentImparter != Imparter.unknown) {
-      try {
-        this.loading = true;
-        this.isAuthorized = await this.determineAuthorized();
-      } catch (e) {
-      } finally {
-        this.loading = false;
-      }
+    if (!this.hub && this.rootElement?.hasAttribute('hubId')) {
+      this.hubId = this.rootElement.getAttribute('hubId') || undefined;
     }
+
+    if (!this.orientation && this.rootElement?.hasAttribute('orientation')) {
+      this.orientation = this.rootElement.getAttribute('orientation') as Orientation;
+    }
+
+    if (!this.sku && this.rootElement?.hasAttribute('sku')) {
+      this.sku = this.rootElement.getAttribute('sku');
+    }
+
+    if (!this.priceDollars && this.rootElement?.hasAttribute('priceDollars')) {
+      this.priceDollars = this.rootElement.getAttribute('priceDollars');
+    }
+
+    if (!this.loginMessage && this.rootElement?.hasAttribute('loginMessage')) {
+      this.loginMessage = this.rootElement.getAttribute('loginMessage');
+    }
+
+    if (!this.inhibitLogin && this.rootElement?.hasAttribute('inhibitLogin')) {
+      this.inhibitLogin = !!this.rootElement.getAttribute('inhibitLogin');
+    }
+
+    if (!this.bitcoinAddress && this.rootElement?.hasAttribute('bitcoinAddress')) {
+      this.bitcoinAddress = this.rootElement.getAttribute('bitcoinAddress');
+    }
+    
+    if (!this.ethereumAddress && this.rootElement?.hasAttribute('ethereumAddress')) {
+      this.ethereumAddress = this.rootElement.getAttribute('ethereumAddress');
+    }
+    
+    if (!this.overhideAddress && this.rootElement?.hasAttribute('overhideAddress')) {
+      this.overhideAddress = this.rootElement.getAttribute('overhideAddress');
+    }
+
+    if (!this.withinMinutes && this.rootElement?.hasAttribute('withinMinutes')) {
+      this.withinMinutes = this.rootElement.getAttribute('withinMinutes');
+    }
+
+    if (this.lastInfo) this.paymentInfoChanged(this.lastInfo);
+  }
+
+  async paymentInfoChanged(info: PaymentsInfo): Promise<void> {
+    await this.mutex.runExclusive(async () => {
+      this.lastInfo = info;
+      this.currentImparter = info.currentImparter;
+      this.loginElement = info.loginElement;
+      this.isLogedIn = !!info.currentImparter && !!info.payerSignature[info.currentImparter];
+      this.signature = info.payerSignature[info.currentImparter];
+  
+      if (!this.isInited) return;
+  
+      this.validate();
+  
+      this.isAuthorized = false;
+      this.topupDollars = parseFloat(this.priceDollars || "0");
+      if (!this.loginMessage && this.currentImparter && this.currentImparter != Imparter.unknown) {
+        try {
+          this.loading = true;
+          this.isAuthorized = await this.determineAuthorized();
+        } catch (e) {
+        } finally {
+          this.loading = false;
+        }
+      }
+      console.log(`JTN ?? ${this.sku} ${this.isLogedIn} ${this.isAuthorized} ${this.lastInfo.ordinal}`);
+    });
   }
 
   toDollars(what?: number | null): string {
@@ -414,6 +472,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   // @throws 
   async determineAuthorized(): Promise<boolean> {
     const address = this.getToAddress();
+    if (!this.isLogedIn) {
+      return false;
+    }
+
     if (!this.hub) {
       console.error(`no hub`);
       throw `no hub`;

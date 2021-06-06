@@ -155,17 +155,22 @@ export class OverhideLogin extends FASTElement implements IOverhideLogin {
   rootElement?: HTMLElement;
   envelopeElement?: HTMLElement;
   hub?: IOverhideHub; 
+  opens: any[] = [];
 
   public constructor() {
     super(); 
   }
 
   // Open the login modal
-  public open(): void {
+  public open(): Promise<void> {
     if (this.rootElement) {
       this.rootElement.style.display = 'block';
       this.$emit('overhide-login-open');
-    }    
+      return new Promise<void>((resolve, reject) => {
+        this.opens.push(resolve);
+      });;      
+    }
+    return Promise.resolve();
   }
 
   // Close the login modal
@@ -173,6 +178,8 @@ export class OverhideLogin extends FASTElement implements IOverhideLogin {
     if (this.rootElement) {
       this.rootElement.style.display = 'none';
       this.$emit('overhide-login-close');
+      this.opens.forEach(resolve => resolve());
+      this.opens = [];
     }
   }
 

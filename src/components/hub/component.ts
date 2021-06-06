@@ -106,7 +106,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     skuAuthorizations: {},
     skuComponents: {},
 
-    time: new Date()
+    ordinal: 0
   };
   
   // set error if any
@@ -119,6 +119,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   private allowNetworkType: NetworkType = NetworkType.prod;
   private isWiredUp = false;
+  private ordinal = 1;
   
   // cache of outstanding results
   private tallyCache: {[key: string]: Promise<{tally: number | null, asOf: string | null}>} = {};
@@ -507,7 +508,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   // Trigger redraw via application state update
   private pingApplicationState = () => {
-    this.paymentsInfo = {...this.paymentsInfo, time: new Date()};
+    this.paymentsInfo = {...this.paymentsInfo, ordinal: this.ordinal++};
   }
   
   // Check current credentials for any transactions on current ledger.
