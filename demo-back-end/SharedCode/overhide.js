@@ -68,7 +68,7 @@ module.exports = {
    * @param {number} costDollars - amount of dollars (USD) to cover
    * @param {number} tallyMinutes - if null, all time, else number of minutes since now
    */
-  isCostCovered: async (uri, from, to, costCents, tallyMinutes) => {
+  isCostCovered: async (uri, from, to, costDollars, tallyMinutes) => {
     if (tallyMinutes) {
       let since = new Date();
       since.setMinutes(since.getMinutes() - tallyMinutes);

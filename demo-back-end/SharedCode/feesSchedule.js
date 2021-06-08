@@ -1,29 +1,29 @@
 module.exports = {
-  'free': {
+  'free-feature': {
     'expiryMinutes': 0,
     'costDollars': 0,
     'address': {
-      'dollars': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'ethers': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'bitcoins': 'tb1q2ye03p4jdcja4vn9ap4tfq0qcc6esw3zwthcau'
+      'dollars': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'ethers': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'bitcoins': 'tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z'
     }
   },
-  'paid': {
+  'paid-feature': {
     'expiryMinutes': 0,
     'costDollars': 2.00,
     'address': {
-      'dollars': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'ethers': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'bitcoins': 'tb1q2ye03p4jdcja4vn9ap4tfq0qcc6esw3zwthcau'
+      'dollars': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'ethers': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'bitcoins': 'tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z'
     }
   },
-  'subscription': {
+  'subscribed-feature': {
     'expiryMinutes': 2,
     'costDollars': 3.00,
     'address': {
-      'dollars': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'ethers': '0xd6106c445A07a6A1caF02FC8050F1FDe30d7cE8b',
-      'bitcoins': 'tb1q2ye03p4jdcja4vn9ap4tfq0qcc6esw3zwthcau'
+      'dollars': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'ethers': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',
+      'bitcoins': 'tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z'
     }
   }
 };
