@@ -199,6 +199,17 @@ export interface IOverhideStatus {
 // Represents the one non-visible hub component that controls all the activity.  
 // This doesn't need to be in the dom, but the same hub must be programatically
 // connected to all the components.
+//
+// When hooking up using DOM, the element takes three attributes:
+//
+// - isTest :: whether testnets ledgers should be interrogated
+// - apiKey :: your API key to let the component retrieve token (less bad-actor proof) 
+// - token :: the token retrieved from your back-end (more bad-actor proof)
+//
+// 'apiKey' and 'token' are either-or:  if you specify the 'apiKey' then the component
+// will retrieve the token, but that means you 'apiKey' sits in browser-code.
+//
+// For 'apiKey' and 'token' see https://token.overhide.io/swagger.html.
 export interface IOverhideHub {
   // @param {Imparter} imparter - to retrieve for
   // @returns {string} the network name

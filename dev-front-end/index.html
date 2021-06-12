@@ -17,7 +17,18 @@
   </body>
   <script>
     $(document).ready(function() {
-      $('#overhide-widgets-demo').load("/demo-front-end/index.html div#demo-front-end");
+      $('#overhide-widgets-demo').load("/demo-front-end/basic.html div#demo-front-end");
+
+      fetch(`${BACKEND_CONNECTION_STRING}/GetToken`)
+        .then(async (response) => {
+          if (response.ok) {
+            const hub = document.querySelector('#demo-hub');
+            hub.setAttribute('token', await response.text());
+          } else {
+            console.error(`error talking to back-end &mdash; ${response.status} &mdash; ${response.statusText}`);
+          }
+        }).catch(e => console.error(`error talking to back-end &mdash; ${e}`));
+
     });
   </script>  
 </html>

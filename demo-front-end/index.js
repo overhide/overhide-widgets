@@ -36,6 +36,13 @@ function addError(text) {
 window.addEventListener('overhide-appsell-sku-clicked',(e) => { 
   console.log(`sku-clicked :: ${JSON.stringify(e.detail, null, 2)}`);
   
+  if (BACKEND_CONNECTION_STRING === `NONE`) {
+    // No back-end version, handle in front-end only
+    addMessage(e.detail.sku);  
+    return;
+  }
+
+  // Call back-end and ensure it verifies before saying it's handled.
   fetch(`${BACKEND_CONNECTION_STRING}/RunFeature`
     +`?sku=${e.detail.sku}`
     +`&currency=${e.detail.currency}`

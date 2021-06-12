@@ -28,10 +28,21 @@ import w3Css from "../../static/w3.css";
 const template = html<OverhideHub>`<template ${ref('rootElement')}></template>`
 
 // These must be specified if the hub is not connected to the DOM.
+//
+// Pass an instance of these parameters to the IOverhideHub constructor when wiriing in the
+// hub via script.
+//
+// @param {boolean} isTest - whether testnets ledgers should be interrogated
+// @param {string} apiKey - your API key to let the component retrieve token (less bad-actor proof)
+// @param {string}token - the token retrieved from your back-end (more bad-actor proof)
+//
+// For 'apiKey' and 'token' see https://token.overhide.io/swagger.html.
 interface CtorNamedParams {
   isTest: boolean, 
-  apiKey: string
+  apiKey: string,
+  token: string
 }
+
 @customElement({
   name: "overhide-hub",
   template
@@ -42,6 +53,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   @attr
   apiKey?: string | null; 
+
+  @attr
+  token?: string | null; 
 
   // payments object
   @observable 
@@ -133,6 +147,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     if (this.rootElement?.hasAttribute('apiKey')) {
       this.apiKeyChanged('', this.rootElement.getAttribute('apiKey') || '');
     }
+    if (this.rootElement?.hasAttribute('token')) {
+      this.tokenChanged('', this.rootElement.getAttribute('token') || '');
+    }
     this.initSession().then(() => {
       this.initCallbacks();
       this.pingApplicationState();  
@@ -144,7 +161,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     super();
     if (params) {
       this.isWiredUp = true;
-      const {isTest, apiKey} = params;
+      const {isTest, apiKey, token} = params;
       this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
       if (isTest) {
         this.isTestChanged(false, isTest);
@@ -152,6 +169,9 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
       if (apiKey) {
         this.apiKeyChanged('', apiKey);
       }  
+      if (token) {
+        this.tokenChanged('', token);
+      }        
       this.initSession().then(() => {
         this.initCallbacks();      
         this.pingApplicationState();
@@ -189,7 +209,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         await this.authenticate(imparter);
       }
       this.pingApplicationState();
-      console.log(`JTN :: set ${JSON.stringify(this.paymentsInfo.isOnLedger, null, 2)}`);
       sessionStorage.setItem('paymentsInfo', JSON.stringify({...this.paymentsInfo, skuComponents: null, loginElement: null}));
       return true;
     }
@@ -493,11 +512,18 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     this.initNetworks();
   }
 
-  private apiKeyChanged(oldValue: string, newValue: string) {
+  private async apiKeyChanged(oldValue: string, newValue: string) {
     if (!this.isWiredUp) return;
-    this.apiKey = newValue;
-    this.initToken();
+    const token = await this.initToken(newValue);
+    if (token) {
+      await this.initLib(token);
+    }
   }
+
+  private async tokenChanged(oldValue: string, newValue: string) {
+    if (!this.isWiredUp) return;
+    await this.initLib(newValue);
+  }  
 
   // @returns {Currency} 
   private getCurrentCurrency = () => {
@@ -578,7 +604,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
    * 
    * @returns {string} the token.
    */
-  private getToken = async () => {
+  private getToken = async (): Promise<string | null> => {
     const tokenUrl = `https://token.overhide.io/token`;
     const url = `${tokenUrl}?apikey=${this.apiKey}`;
 
@@ -593,15 +619,33 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     }).then(token => {
       return token;
     }).catch(e => {
+      return null;
     });
   }
 
-  private initToken = () => {
-    if (!this.apiKey) return;
+  // sets this.token
+  // @param {string} apiKey - the API key to retrieve token for.
+  //
+  // see https://token.overhide.io/swagger.html
+  private initToken = async (apiKey: string): Promise<string | null> => {
+    if (!this.apiKey) return null;
+    this.token = await this.getToken();
+    return this.token;
+  }
 
-    // Ensure oh$ has a token.
+  // initializes oh$ library
+  // @param {string} token - the token for overhide.
+  //
+  // see https://token.overhide.io/swagger.html
+  private initLib = async (token: string) => {
+    if (!token) return;
+    const that = this;
     (async () => {
-      oh$.enable(await this.getToken());
+      try {
+        await oh$.enable(token);
+      } catch (e) {
+        console.error(e);
+      }
     })();
   }
 
@@ -615,7 +659,6 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     const fromStorage = window.sessionStorage.getItem('paymentsInfo');
     if (fromStorage) {
       this.paymentsInfo = JSON.parse(fromStorage);
-      console.log(`JTN :: init ${JSON.stringify(this.paymentsInfo.isOnLedger, null, 2)}`);
       if (this.paymentsInfo.currentImparter) {
         switch (this.paymentsInfo.currentImparter) {
           case Imparter.ohledgerSocial:

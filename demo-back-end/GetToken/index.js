@@ -1,4 +1,4 @@
-const feesSchedule = require('../SharedCode/config.js')['fees-schedule'];
+const overhide = require('../SharedCode/overhide.js');
 
 /**
  * @param {res:..} context -- will contain the response 'res' which is a JSON payload `{schedule:..}` 
@@ -8,11 +8,9 @@ const feesSchedule = require('../SharedCode/config.js')['fees-schedule'];
 module.exports = async function (context, req) {
   context.res = {
     status: 200,
-    body: {
-      schedule: feesSchedule
-    },
+    body: await overhide.getToken(),
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'text/plain',
       'Access-Control-Allow-Origin': '*' 
     }
   };

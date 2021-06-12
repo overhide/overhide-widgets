@@ -1,5 +1,8 @@
 const fetch = require('node-fetch');
 
+// The API key to get token for.
+const API_KEY = require('../SharedCode/config.js')['api-key'];
+
 /**
  * Retrieve API access token
  * 
@@ -7,8 +10,7 @@ const fetch = require('node-fetch');
  */
 async function getToken() {
   const tokenUrl = `https://token.overhide.io/token`;
-  const apiKey = '0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___';
-  const url = `${tokenUrl}?apikey=${apiKey}`;
+  const url = `${tokenUrl}?apikey=${API_KEY}`;
 
   console.log('retrieving token for APIs');
   return fetch(url, {
@@ -59,6 +61,13 @@ async function getTallyDollars(uri, from, to, date) {
 
 
 module.exports = {
+  /**
+   * Retrieve API access token
+   * 
+   * @returns {string} the token.
+   */
+  getToken: getToken,
+
   /**
    * Determine if cost is covered withing the number of days on the ledger
    * 

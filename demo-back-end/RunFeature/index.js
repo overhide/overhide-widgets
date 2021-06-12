@@ -1,5 +1,5 @@
-var feesSchedule = require('../SharedCode/feesSchedule.js');
-var overhide = require('../SharedCode/overhide.js');
+const feesSchedule = require('../SharedCode/config.js')['fees-schedule'];
+const overhide = require('../SharedCode/overhide.js');
 
 /**
  * @param {res:..} context -- will contain the response 'res' which is a JSON payload `{featureUsed:true|false}` 

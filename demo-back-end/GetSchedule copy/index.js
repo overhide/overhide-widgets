@@ -1,4 +1,4 @@
-const feesSchedule = require('../SharedCode/config.js')['fees-schedule'];
+var feesSchedule = require('../SharedCode/config.js');
 
 /**
  * @param {res:..} context -- will contain the response 'res' which is a JSON payload `{schedule:..}` 
