@@ -59,6 +59,24 @@
           transition: opacity 1s ease-in 1s;
           pointer-events: none;
         }
+        .header-envelope {
+          display: flex;
+          justify-content: flex-start;
+        }
+        .header-logo {
+          width: 100px;
+          margin-top: 10px;
+        }
+        .headers {
+          color: rgba(255, 166, 0, 0.829);
+          display: flex;
+          flex-direction: column;
+          margin-left: 1em;
+          margin-top: .25em;
+        }
+        .header {
+          font-size: x-large;
+        }
       </style>
       <img class="visa" id="visa" src="./visa.png">
 
@@ -71,8 +89,17 @@
         </div>          
       </div>
 
-      <overhide-login id="login-widget" hubId="demo-hub">
-
+      <overhide-login id="login-widget" 
+                      hubId="demo-hub"
+                      overhideSocialGoogleDisabled
+                      overhideBitcoinDisabled>
+        <div slot="header" class="header-envelope">
+          <img src="./logo.png" class="header-logo">
+          <div class="headers">
+            <div class="header">Custom Login</div>
+            <div>(logo + no <em>Google</em> or <em>bitcoin</em>)</div>
+          </div>
+        </div>
       </overhide-login>
 
       <div class="w3-row w3-padding-64"><div class="w3-col s4">&nbsp</div><div class="w3-col s4 w3-center">

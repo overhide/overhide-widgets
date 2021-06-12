@@ -62,7 +62,7 @@ const template = html<OverhideStatus>`
         `)}
       </div>
 
-      <div type="button" @click="${e => e.addressClicked()}">
+      <div @click="${e => e.addressClicked()}">
         <div class="label"><span>&nbsp;${e => e.address}</span></div>
       </div>
       
