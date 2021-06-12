@@ -60,7 +60,7 @@
           pointer-events: none;
         }
       </style>
-      <img class="visa" id="visa" src="/demo-front-end/visa.png">
+      <img class="visa" id="visa" src="./visa.png">
 
       <!-- look at `window.onload` script above to see how we set the token from back-end -->
       <overhide-hub id="demo-hub" isTest></overhide-hub>      
@@ -71,7 +71,9 @@
         </div>          
       </div>
 
-      <overhide-login id="login-widget" hubId="demo-hub"></overhide-login>
+      <overhide-login id="login-widget" hubId="demo-hub">
+
+      </overhide-login>
 
       <div class="w3-row w3-padding-64"><div class="w3-col s4">&nbsp</div><div class="w3-col s4 w3-center">
         <overhide-appsell 
@@ -89,7 +91,6 @@
             priceDollars="0"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Login to Use Free Feature"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
           </overhide-appsell>
@@ -102,7 +103,6 @@
             priceDollars="2"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Add Feature ($${topup})"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
           </overhide-appsell>
@@ -114,7 +114,6 @@
             priceDollars="3"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Subscribe Feature For 30 Minutes ($${topup})"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             withinMinutes="30">
