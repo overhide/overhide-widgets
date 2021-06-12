@@ -12,8 +12,8 @@
 
 We have several component demo files in [/demo-front-end](/demo-front-end):
 
-- [/demo-front-end/basic.html](/demo-front-end/basic.html)
-- [/demo-front-end/no-back-end.html](/demo-front-end/no-back-end.html)
+- basic:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)
+- no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)
 - [/demo-front-end/custom.html](/demo-front-end/custom.html)
 - [/demo-react-app/react-app.html](/demo-react-app/react-app.html)
 
@@ -87,8 +87,8 @@ See [/demo-react-app](/demo-react-app).
 
 We have several component demo files in [/demo-front-end](/demo-front-end):
 
-- [/demo-front-end/basic.html](/demo-front-end/basic.html)
-- [/demo-front-end/no-back-end.html](/demo-front-end/no-back-end.html)
+- basic:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)
+- no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)
 - [/demo-front-end/custom.html](/demo-front-end/custom.html)
 - [/demo-react-app/react-app.html](/demo-react-app/react-app.html)
 
