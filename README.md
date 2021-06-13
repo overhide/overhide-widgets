@@ -1,4 +1,4 @@
-<p align="center"><a href="https://overhide.io"><img src="./.github/logo.png" width="200px"/></a></p>
+<p align="center"><a href="https://overhide.io"><img src="https://overhide.github.io/overhide-widgets/assets/logo.png" width="200px"/></a></p>
 
 <p align="center"><a href="https://overhide.io">overhide.io</a></p><p style="width: 500px; margin: auto">A free and open-sourced (mostly) ecosystem of widgets, a front-end library, and back-end services &mdash; to make addition of "logins" and "in-app-purchases" (IAP) to your app as banal as possible.</p>
 
@@ -6,7 +6,7 @@
 
 # overhide widgets
 
-Customizable web-components enabling login and paid up-sells / in-app purchases (IAP) for any Web application to be as simple as possible.
+Customizable web-components enabling login and in-app purchases (IAP, paid up-sells) for any Web application to be as simple as possible.
 
 The web-components are backed by the [legers.js library](https://www.npmjs.com/package/ledgers.js) in the browser and [renumeration APIs](https://overhide.io/2020/09/06/remuneration-api.html) to allow IAP in US dollars, ethers, and bitcoins (easily extensible to other cryptos).
 
@@ -16,16 +16,58 @@ The authentication and authorization mechanism used herein is the [Ledger-Based 
 
 
 
-How simple is it to put IAPs in your Web application?  Check out this "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)), it's essentially:
+How simple is it to put IAPs in your Web application?  Check out this "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) &mdash; it's essentially:
 
 ```
+<html>
+
+    ...
+
+    <script>
+      window.addEventListener('overhide-appsell-sku-clicked',(e) => { /* react to feature being used, only if, auth'ed */ });
+    </script>
+
+    <overhide-hub id="hub" apiKey="0x___API_KEY_ONLY_FOR_DEMOS_AND_TESTS___" isTest></overhide-hub>      
+
+    <overhide-login hubId="hub"
+                    overhideSocialMicrosoftEnabled
+                    overhideSocialGoogleEnabled
+                    overhideOhledgerWeb3Enabled
+                    overhideEthereumWeb3Enabled
+                    overhideBitcoinEnabled
+                    overhideLedgerEnabled>
+    </overhide-login>
+
+    <overhide-appsell hubId="hub" 
+                      sku="2-dollar-feature"
+                      priceDollars="2"
+                      authorizedMessage="Use Feature"
+                      unauthorizedTemplate="Add Feature ($${topup})"
+                      bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
+                      ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
+                      overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
+    </overhide-appsell>
+    
+    ...
+    
+</html>
 ```
 
 
 
+Just the above three web-components in an HTML page is all that's needed for the simplest authentication and authorization scenarios &mdash; allowing you to get paid ($2 in the above sample).  The components use the [legers.js library](https://www.npmjs.com/package/ledgers.js) library and [renumeration APIs](https://overhide.io/2020/09/06/remuneration-api.html) to provide all functionality.
+
+Now, of course, the simplest example above doesn't use a back-end and all code sits fully decompilable in the browser.  It's useful for some scenarios, but for other scenarios you will want to [re-check authorizations in your back-end code and have feature-flows run through a back-end](https://overhide.io//2019/03/27/authorizations-and-exposed-source-code.html).
+
+Most demos in this repo use feature-flows through a simple back-end that's provided as the [/demo-back-end](/demo-back-end) node.js application &mdash; that also runs in [Azure functions](https://azure.microsoft.com/en-us/services/functions/).  You can base your own back-end off of these samples, it's very little code.
 
 
 
+The below infographic conveys at-a-glance what you get with these widgets:
+
+<p align="center"><a href="https://overhide.github.io/overhide-widgets/assets/logo.png" target="_blank"><img src="https://overhide.github.io/overhide-widgets/assets/widgets.svg" width="75%"/></a></p>
+
+The top-left shows a sample Web app with a nav-bar containing the 
 
 ## Quick Start
 
@@ -34,6 +76,18 @@ Quick-study the demos with reference to the steps below, it's all pretty simple.
 To use the widgets follow these steps:
 
 1. 
+
+## Widget Reference
+
+Below is a reference of web-component attributes and override [slots](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) for customizing.
+
+### overhide-hub
+
+### overhide-login
+
+### overhide-appsell
+
+### overhide-status
 
 ## Demos
 
