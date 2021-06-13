@@ -77,51 +77,54 @@ To use the widgets follow these steps:
 
 1. 
 
-## Widget Reference
-
-Below is a reference of web-component attributes and override [slots](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) for customizing.
-
-### overhide-hub
-
-### overhide-login
-
-### overhide-appsell
-
-### overhide-status
-
 ## Demos
 
 We have several component demo files in [/demo-front-end](/demo-front-end):
 
 - basic:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)
-- no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)
-- custom buttons: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html) (see "Customizing" section below)
+- no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html) (no [back-end](#back-end))
+- custom buttons: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html) (see [Customizing](#customizing) section below)
 - [/demo-react-app/react-app.html](/demo-react-app/react-app.html)
+- simplest:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html) (just one button, no [back-end](#back-end))
 
 
 
-Each demo shows:
+Most demos show:
 
-- a nav-bar at the top with an `<overhide-status ..>` web-component flush to the right.
-- a login button
-- 3 feature buttons:
+- a nav-bar at the top with an [overhide-status](#overhide-status) web-component flush to the right.
+- a login button (which is just an [overhide-appsell](#overhide-appsell) component with a *loginMessage* attribute instead of a *sku*)
+- 3 feature buttons ([overhide-appsell](#overhide-appsell) components):
   - free
   - $2 up-sell
   - $3 subscription for 30 minutes
 
-Everything is optional except for the non-visible `<overhide-hub ..>` web-component that can be wired via DOM or JavaScript (see the [react-app demo](/demo-ract-app/react-app.html) for JS wiring).
+Everything is optional except for the non-visible [overhide-hub](#overhide-hub)  web-component that can be wired via DOM or JavaScript (see the [react-app demo](/demo-ract-app/react-app.html) for JS wiring).
 
-You could just have a single up-sell / in-app purchase button, no status, no explicit login, and it will allow all the functionality.
+You could just have a single up-sell / in-app purchase button, no status, no explicit login, and it will allow all the functionality (see "simplest"  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)).
 
 
 
 The [/demo-front-end/no-back-end.html](/demo-front-end/no-back-end.html) shows the use of these widgets without any back-end &mdash; shows use of widgets with just an API key, the back-end setup can be ignored for this one.  This is OK for some projects, but is less bad-actor proof.  All other demos leverage a back-end.
 
+##### Back-End
+
+Most demos run their feature-flows via our  [/demo-back-end](/demo-back-end): when a user clicks a feature, the back-end is interrogated to complete the feature flow.  The back-end verifies authentication and authorization as per credentials provided and monies paid on a ledger of choice.
+
+The back-end serves three purposes on behalf of our front-ends:
+
+- retrieves [an overhide token](https://token.overhide.io/swagger.html) for use with *overhide* API -- browser can call to get the token and provide to `<overhide-hub ..>`  component.
+- retrieves the fees-schedule
+- runs the features on the back-end when clicked in the front-end (`/RunFeature` endpoints)
+  - has mandatory `query` parameters to authenticate and authorize
+  - feature will not run if bad authentication or insufficient funds on ledger for feature (as per parameters): will result in "Unauthorized by Ledger-Based AuthZ-" response.
+
+The endpoints for these are listed in the [Local Development &mdash; Back-End](#back-end) section below.
 
 
-The [/demo-back-end](/demo-back-end) code runs both as stand-alone *node.js* as well as on  [Azure Functions](https://azure.microsoft.com/en-us/services/functions/) (instructions below in "Local Development").  
 
-All of the above demos &mdash; with the exception of the *no-back-end* demo &mdash; hit this back-end code as it is stood up at https://demo-back-end.azurewebsites.net/api on Azure; but, it's easy enough to stand-up locally and play around (again, see "Local Development" below).
+The [/demo-back-end](/demo-back-end) code runs both as stand-alone *node.js* as well as on  [Azure Functions](https://azure.microsoft.com/en-us/services/functions/) (instructions below in [Local Development](#local-development) section).  
+
+All of the above demos &mdash; with the exception of the *no-back-end* and *simplest* demos &mdash; hit this back-end code as it is stood up at https://demo-back-end.azurewebsites.net/api on Azure; but, it's easy enough to stand-up locally and play around (again, see "Local Development" below).
 
 ## Distributable
 
@@ -141,7 +144,7 @@ Within your front-end projects; using *npm* simply:  `npm install overhide-widge
 
 #### Enabling with Token
 
-APIs abstracted by *overhide-widgets* require a bearer-token.  The `token` is passed in to the `<overhide-hub token="..">` component (see "The *overhide-hub* Component" section below for details).
+APIs abstracted by *overhide-widgets* require a bearer-token.  The `token` is passed in to the `<overhide-hub token="..">` component (see the [overhide-hub](#overhide-hub) component section for details).
 
 The component either takes a `token=".."` retrieved from a back-end (optional) or an `apiKey=".."` provided statically &mdash; less bad-actor proof, but OK for some projects.
 
@@ -180,6 +183,18 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 
 See [/demo-react-app](/demo-react-app).
+
+## Widget Reference
+
+Below is a reference of web-component attributes and override [slots](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) for customizing.
+
+### overhide-hub
+
+### overhide-login
+
+### overhide-appsell
+
+### overhide-status
 
 ### Local Development
 
@@ -255,17 +270,7 @@ The you can try hitting the local AZ functions with:
 > - https://demo-back-end.azurewebsites.net/api/gettoken -- provides the [overhide token](https://token.overhide.io/swagger.html) for use with `<overhide-hub ..>` component.
 > - There is also the main `https://demo-back-end.azurewebsites.net/api/RunFeature` endpoint is used by the demo front-ends (see [/demo-front-end/index.js](/demo-front-end/index.js)).
 
-### Demo Back-End Server
 
-Serves three purposes on behalf of our demo front-ends:
-
-- retrieves [an overhide token](https://token.overhide.io/swagger.html) for use with *overhide* API -- browser can call to get the token and provide to `<overhide-hub ..>`  component.
-- retrieves the fees-schedule
-- runs the features on the back-end when clicked in the front-end (`/RunFeature` endpoints)
-  - has mandatory `query` parameters to authenticate and authorize
-  - feature will not run if bad authentication or insufficient funds on ledger for feature (as per parameters): will result in "Unauthorized by Ledger-Based AuthZ-" response.
-
-The endpoints for these are listed in the "Local Development &mdash; Back-End" section above.
 
 ### The *overhide-hub* Component
 
