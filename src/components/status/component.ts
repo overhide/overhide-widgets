@@ -72,8 +72,10 @@ const template = html<OverhideStatus>`
         </span>        
       `)}
 
-      <div class="logout svg2 ${e => e.canLogout ? '' : 'disabled'}">
+      <div class="logout svg2 ${e => e.canGetTransactions ? '' : 'disabled'}">
         <div class="refresh-svg" @click="${e => e.refresh()}">${refreshIcon}</div>
+      </div>
+      <div class="logout svg2 ${e => e.canLogout ? '' : 'disabled'}">
         <div class="logout-svg" @click="${e => e.logout()}">${logoutIcon}</div>
       </div>
     </div>
@@ -234,7 +236,6 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
   };
 
   paymentInfoChanged(info: PaymentsInfo): void {
-
     this.error = null;
     this.currentImparter = info.currentImparter;
     this.isSignedIn = !!info.payerSignature[info.currentImparter];
@@ -293,7 +294,7 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
   }
 
   refresh(): void {
-    if (this.hub && this.currentImparter && this.canLogout) {
+    if (this.hub && this.currentImparter && this.canGetTransactions) {
       this.hub.refresh(this.currentImparter);
     }
   }

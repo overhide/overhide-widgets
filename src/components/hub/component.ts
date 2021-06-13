@@ -27,22 +27,6 @@ import w3Css from "../../static/w3.css";
 
 const template = html<OverhideHub>`<template ${ref('rootElement')}></template>`
 
-// These must be specified if the hub is not connected to the DOM.
-//
-// Pass an instance of these parameters to the IOverhideHub constructor when wiriing in the
-// hub via script.
-//
-// @param {boolean} isTest - whether testnets ledgers should be interrogated
-// @param {string} apiKey - your API key to let the component retrieve token (less bad-actor proof)
-// @param {string}token - the token retrieved from your back-end (more bad-actor proof)
-//
-// For 'apiKey' and 'token' see https://token.overhide.io/swagger.html.
-interface CtorNamedParams {
-  isTest: boolean, 
-  apiKey: string,
-  token: string
-}
-
 @customElement({
   name: "overhide-hub",
   template
@@ -140,6 +124,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
 
   connectedCallback() {
     super.connectedCallback();
+    
     this.isWiredUp = true;
     if (this.rootElement?.hasAttribute('isTest')) {
       this.isTestChanged(false, true);
@@ -156,27 +141,12 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     });
   };
 
-  // @param {CtorNamedParams?} constructor params, must be defined if this hub is not connected to the DOM.
-  public constructor(params: CtorNamedParams | undefined) {
+  public constructor() {
     super();
-    if (params) {
-      this.isWiredUp = true;
-      const {isTest, apiKey, token} = params;
-      this.allowNetworkType = !!isTest ? NetworkType.test : NetworkType.prod;
-      if (isTest) {
-        this.isTestChanged(false, isTest);
-      }
-      if (apiKey) {
-        this.apiKeyChanged('', apiKey);
-      }  
-      if (token) {
-        this.tokenChanged('', token);
-      }        
-      this.initSession().then(() => {
-        this.initCallbacks();      
-        this.pingApplicationState();
-      });      
-    }
+  }
+
+  public init() {
+    this.connectedCallback();
   }
 
   // @param {string} error -- the error string to set
@@ -209,7 +179,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
         await this.authenticate(imparter);
       }
       this.pingApplicationState();
-      sessionStorage.setItem('paymentsInfo', JSON.stringify({...this.paymentsInfo, skuComponents: null, loginElement: null}));
+      sessionStorage.setItem('paymentsInfo', JSON.stringify({...this.paymentsInfo, skuComponents: {}, loginElement: null}));
       return true;
     }
     catch (e) 

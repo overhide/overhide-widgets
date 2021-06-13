@@ -45,34 +45,34 @@ const template = html<OverhideLogin>`
         <div class="modal">
           <div class="w3-container">
             <slot name="header"></slot>
-            ${when(e => !e.overhideSocialMicrosoftDisabled, html<OverhideLogin>`
+            ${when(e => e.overhideSocialMicrosoftEnabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-ohsocial-ms hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-ms>
+                <overhide-ohsocial-ms ${ref('overhideSocialMicrosoftElement')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-ms>
               </div>
             `)}
-            ${when(e => !e.overhideSocialGoogleDisabled, html<OverhideLogin>`
+            ${when(e => e.overhideSocialGoogleEnabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-ohsocial-google hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-google>
+                <overhide-ohsocial-google ${ref('overhideSocialGoogleElement')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohsocial-google>
               </div>
             `)}            
-            ${when(e => !e.overhideOhledgerWeb3Disabled, html<OverhideLogin>`
+            ${when(e => e.overhideOhledgerWeb3Enabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-ohledger-web3 hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger-web3>
+                <overhide-ohledger-web3 ${ref('overhideOhledgerWeb3Element')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger-web3>
               </div>
             `)}            
-            ${when(e => !e.overhideEthereumWeb3Disabled, html<OverhideLogin>`
+            ${when(e => e.overhideEthereumWeb3Enabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-eth-web3 hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-eth-web3>
+                <overhide-eth-web3 ${ref('overhideEthereumWeb3Element')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-eth-web3>
               </div>
             `)}            
-            ${when(e => !e.overhideBitcoinDisabled, html<OverhideLogin>`
+            ${when(e => e.overhideBitcoinEnabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-btc-manual hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
+                <overhide-btc-manual ${ref('overhideBitcoinElement')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-btc-manual>
               </div>
             `)}            
-            ${when(e => !e.overhideLedgerDisabled, html<OverhideLogin>`
+            ${when(e => e.overhideLedgerEnabled, html<OverhideLogin>`
               <div class="s12">
-                <overhide-ohledger hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
+                <overhide-ohledger ${ref('overhideLedgerElement')} hubId="${e => e.hubId}" @close="${(e) => e.close()}"></overhide-ohledger>
               </div>
             `)}
           </div>
@@ -138,25 +138,31 @@ export class OverhideLogin extends FASTElement implements IOverhideLogin {
   hubId?: string;
 
   @attr({ mode: 'boolean' })
-  overhideLedgerDisabled?: boolean = false;
+  overhideLedgerEnabled?: boolean = false;
 
   @attr({ mode: 'boolean' })
-  overhideBitcoinDisabled?: boolean = false;
+  overhideBitcoinEnabled?: boolean = false;
 
   @attr({ mode: 'boolean' })
-  overhideSocialMicrosoftDisabled?: boolean = false;
+  overhideSocialMicrosoftEnabled?: boolean = false;
 
   @attr({ mode: 'boolean' })
-  overhideSocialGoogleDisabled?: boolean = false;
+  overhideSocialGoogleEnabled?: boolean = false;
 
   @attr({ mode: 'boolean' })
-  overhideOhledgerWeb3Disabled?: boolean = false;
+  overhideOhledgerWeb3Enabled?: boolean = false;
 
   @attr({ mode: 'boolean' })
-  overhideEthereumWeb3Disabled?: boolean = false;
+  overhideEthereumWeb3Enabled?: boolean = false;
 
   rootElement?: HTMLElement;
   envelopeElement?: HTMLElement;
+  overhideSocialMicrosoftElement?: HTMLElement;
+  overhideSocialGoogleElement?: HTMLElement;
+  overhideOhledgerWeb3Element?: HTMLElement;
+  overhideEthereumWeb3Element?: HTMLElement;
+  overhideBitcoinElement?: HTMLElement;
+  overhideLedgerElement?: HTMLElement;
   hub?: IOverhideHub; 
   opens: any[] = [];
 
@@ -200,6 +206,13 @@ export class OverhideLogin extends FASTElement implements IOverhideLogin {
       }
     }
     this.hub.setLoginElement(this);
+
+    if (this.overhideSocialMicrosoftElement) (this.overhideSocialMicrosoftElement as any).setHub(hub);
+    if (this.overhideSocialGoogleElement) (this.overhideSocialGoogleElement as any).setHub(hub);
+    if (this.overhideOhledgerWeb3Element) (this.overhideOhledgerWeb3Element as any).setHub(hub);
+    if (this.overhideEthereumWeb3Element) (this.overhideEthereumWeb3Element as any).setHub(hub);
+    if (this.overhideBitcoinElement) (this.overhideBitcoinElement as any).setHub(hub);
+    if (this.overhideLedgerElement) (this.overhideLedgerElement as any).setHub(hub);
 
     notifier.subscribe(handler, 'paymentsInfo')
     notifier.subscribe(handler, 'error')

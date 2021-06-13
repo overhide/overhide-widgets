@@ -36,7 +36,7 @@ module.exports = {
       }
     },
     'subscribed-feature': {
-      'expiryMinutes': 2,
+      'expiryMinutes': 30,
       'costDollars': 3.00,
       'address': {
         'dollars': '0x046c88317b23dc57F6945Bf4140140f73c8FC80F',

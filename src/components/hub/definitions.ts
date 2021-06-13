@@ -211,6 +211,11 @@ export interface IOverhideStatus {
 //
 // For 'apiKey' and 'token' see https://token.overhide.io/swagger.html.
 export interface IOverhideHub {
+  // Initialize this hub explitily when not connecting to DOM.
+  //
+  // Call this after the `token` or `apiKey` attributes are set, `isTest` if on testnet.
+  init: () => void;
+
   // @param {Imparter} imparter - to retrieve for
   // @returns {string} the network name
   getNetwork: (imparter: Imparter) => string;

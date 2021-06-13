@@ -40,16 +40,40 @@
         overhide-appsell {
           width: 60%;
         }
-        .black-button {
-          background-color: #000000; 
+        .neopolitan-button {
+          color: #8C6551;
+          background-color: #fa94c4;
           width: 100%; 
           height: 100%; 
           padding: 1em;
+          cursor: pointer;
         }
-        .black-button:hover {
-          background-color: #333333;
-          color: white;
+        .neopolitan-button:hover {
+          color: #FFDDBD;
+          background-color: #8C6551;
+          cursor: pointer;
         }
+        .clear-button {
+          width: 100%; 
+          height: 100%; 
+          padding: 1em;
+          cursor: pointer;
+        }
+        .clear-button:hover {
+          cursor: pointer;
+        }
+        .button-icon {
+          width: 100%; 
+          height: 100%; 
+          padding: 1em;
+          cursor: pointer;
+        }
+        .button-icon:hover {
+          cursor: pointer;
+        }
+        .button-icon.unauth {
+          filter: grayscale(100%);
+        }        
         .visa {
           position: fixed;
           top: 0px;
@@ -78,7 +102,7 @@
           font-size: x-large;
         }
       </style>
-      <img class="visa" id="visa" src="./visa.png">
+      <img class="visa" id="visa" src="./assets/visa.png">
 
       <!-- look at `window.onload` script above to see how we set the token from back-end -->
       <overhide-hub id="demo-hub" isTest></overhide-hub>      
@@ -89,12 +113,13 @@
         </div>          
       </div>
 
-      <overhide-login id="login-widget" 
-                      hubId="demo-hub"
-                      overhideSocialGoogleDisabled
-                      overhideBitcoinDisabled>
+      <overhide-login hubId="demo-hub"
+                      overhideSocialMicrosoftEnabled
+                      overhideOhledgerWeb3Enabled
+                      overhideEthereumWeb3Enabled
+                      overhideLedgerEnabled>
         <div slot="header" class="header-envelope">
-          <img src="./logo.png" class="header-logo">
+          <img src="./assets/logo.png" class="header-logo">
           <div class="headers">
             <div class="header">Custom Login</div>
             <div>(logo + no <em>Google</em> or <em>bitcoin</em>)</div>
@@ -106,7 +131,7 @@
         <overhide-appsell 
           hubId="demo-hub" 
           loginMessage="Login">
-            <div slot="unauthorized-button" class="black-button"></div>
+            <div slot="unauthorized-button" class="neopolitan-button"></div>
         </overhide-appsell>
       </div></div>
 
@@ -116,10 +141,16 @@
             hubId="demo-hub" 
             sku="free-feature"
             priceDollars="0"
-            authorizedMessage="Use Feature"
-            unauthorizedTemplate="Login to Use Free Feature"
+            authorizedMessage="Free Popsicle"
+            unauthorizedTemplate="Login for Free Popsicle"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
+
+            <img src="assets/popsicle.png" slot="unauthorized-header" class="button-icon unauth">
+            <img src="assets/popsicle.png" slot="authorized-header" class="button-icon">
+            <div slot="authorized-button" class="clear-button"></div>
+            <div slot="unauthorized-button" class="clear-button"></div>
+
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
@@ -128,10 +159,16 @@
             hubId="demo-hub" 
             sku="paid-feature"
             priceDollars="2"
-            authorizedMessage="Use Feature"
-            unauthorizedTemplate="Add Feature ($${topup})"
+            authorizedMessage="Paid Cone"
+            unauthorizedTemplate="Get Cone ($${topup})"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
+
+            <img src="assets/cone.png" slot="unauthorized-header" class="button-icon unauth">
+            <img src="assets/cone.png" slot="authorized-header" class="button-icon">
+            <div slot="authorized-button" class="clear-button"></div>
+            <div slot="unauthorized-button" class="clear-button"></div>
+
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
@@ -139,11 +176,17 @@
             hubId="demo-hub" 
             sku="subscribed-feature"
             priceDollars="3"
-            authorizedMessage="Use Feature"
-            unauthorizedTemplate="Subscribe Feature For 30 Minutes ($${topup})"
+            authorizedMessage="Subscribed Sundae"
+            unauthorizedTemplate="Add 30 Minute Sundae Subscription ($${topup})"
             ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
             withinMinutes="30">
+
+            <img src="assets/sundae.png" slot="unauthorized-header" class="button-icon unauth">
+            <img src="assets/sundae.png" slot="authorized-header" class="button-icon">
+            <div slot="authorized-button" class="clear-button"></div>
+            <div slot="unauthorized-button" class="clear-button"></div>
+
           </overhide-appsell>
         </div>
       </div>
