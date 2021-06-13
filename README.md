@@ -6,7 +6,26 @@
 
 # overhide widgets
 
-Customizable web-components to enable login and paid up-sells / in-app purchases (IAP) for any Web application.
+Customizable web-components enabling login and paid up-sells / in-app purchases (IAP) for any Web application to be as simple as possible.
+
+The web-components are backed by the [legers.js library](https://www.npmjs.com/package/ledgers.js) in the browser and [renumeration APIs](https://overhide.io/2020/09/06/remuneration-api.html) to allow IAP in US dollars, ethers, and bitcoins (easily extensible to other cryptos).
+
+Everything is open-source except for the US dollar microservice.
+
+The authentication and authorization mechanism used herein is the [Ledger-Based Authorizations](https://overhide.io/2019/03/20/why.html): crypto authorization concepts abstracted out for use with US dollars and any ledger based currency.
+
+
+
+How simple is it to put IAPs in your Web application?  Check out this "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)), it's essentially:
+
+```
+```
+
+
+
+
+
+
 
 ## Quick Start
 

@@ -33,7 +33,7 @@ OverhideOhWeb3;
 OverhideEthWeb3;
 
 const template = html<OverhideLogin>`
-  <template class="w3-modal" ${ref('rootElement')} style="padding-top: 0px; padding-bottom: 0px;">
+  <div class="w3-modal root" ${ref('rootElement')} style="padding-top: 0px; padding-bottom: 0px;">
     <div class="envelope" ${ref('envelopeElement')} @click="${(e, c) => e.outsideClick(c.event)}">
       <div class="w3-modal-content modal">
       <div class="w3-display-container modal-container">
@@ -80,14 +80,15 @@ const template = html<OverhideLogin>`
       </div>
       </div>
     </div>
-  </template>
+  </div>
 `;
 
 const styles = css`
   ${w3Css}
   
-  :host {
-    font-family: "Segoe UI", Arial, sans-serif
+  .root {
+    contain: none;
+    font-family: "Segoe UI", Arial, sans-serif;
   }  
 
   svg {
