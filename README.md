@@ -65,7 +65,7 @@ Most demos in this repo use feature-flows through a simple back-end that's provi
 
 The below infographic conveys at-a-glance what you get with these widgets:
 
-<p align="center"><a href="https://overhide.github.io/overhide-widgets/assets/logo.png" target="_blank"><img src="https://overhide.github.io/overhide-widgets/assets/widgets.svg" width="75%"/></a></p>
+<p align="center"><a href="https://overhide.github.io/overhide-widgets/assets/widgets.svg" target="_blank"><img src="https://overhide.github.io/overhide-widgets/assets/widgets.svg" width="75%"/></a></p>
 
 The top-left shows a sample Web app with a nav-bar housing the [overhide-status](#overhide-status) component.
 
@@ -118,7 +118,7 @@ The back-end serves three purposes on behalf of our front-ends:
   - has mandatory `query` parameters to authenticate and authorize
   - feature will not run if bad authentication or insufficient funds on ledger for feature (as per parameters): will result in "Unauthorized by Ledger-Based AuthZ-" response.
 
-The endpoints for these are listed in the [Local Development &mdash; Back-End](#back-end) section below.
+The endpoints for these are listed in the [Local Development &mdash; Back-End](#back-end-1) section below.
 
 
 
