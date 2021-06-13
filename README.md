@@ -67,7 +67,7 @@ The below infographic conveys at-a-glance what you get with these widgets:
 
 <p align="center"><a href="https://overhide.github.io/overhide-widgets/assets/logo.png" target="_blank"><img src="https://overhide.github.io/overhide-widgets/assets/widgets.svg" width="75%"/></a></p>
 
-The top-left shows a sample Web app with a nav-bar containing the 
+The top-left shows a sample Web app with a nav-bar housing the [overhide-status](#overhide-status) component.
 
 ## Quick Start
 
