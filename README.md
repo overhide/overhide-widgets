@@ -245,7 +245,7 @@ See [/demo-react-app](/demo-react-app).
 
 Below is a reference of the four web-components provided, their attributes, properties, events, and override [slots](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) for customizing.
 
-### overhide-hub
+### `<overhide-hub ..>`
 
 The *overhide-hub* comopnent is the main glue component of the whole subsystem.  
 
@@ -266,6 +266,30 @@ Simply set an ID on the *overhide-hub* component and pass it into the other comp
 </overhide-appsell>
 ```
 
+With this setup, if we're providing our API key right in the client code, just set the *apiKey* attribute on the *overhide-hub* element (a la [no-back-end](/demo-front-end/no-back-end.html) and [simplest](/demo-front-end/simplest.html) demos).
+
+Otherwise, provide the *overhide-hub* element with a token as per all the other demos, repeated below:
+
+```
+<script>
+  // Set the token from back-end
+  window.onload = (event) => {
+  fetch(`${BACKEND_CONNECTION_STRING}/GetToken`)
+    .then(async (response) => {
+      if (response.ok) {
+        const hub = document.querySelector('#demo-hub');
+        hub.setAttribute('token', await response.text());
+      } else {
+        console.error(`error talking to back-end &mdash; ${response.status} &mdash; ${response.statusText}`);
+      }
+    }).catch(e => console.error(`error talking to back-end &mdash; ${e}`));
+  };
+</script>
+```
+
+- the wiring above is in response to retrieving [a valid token](#enabling-with-token) from the back-end &mdash; the `fetch`
+- we set the *token* on the hub using `setAttribute('token',..)`
+
 ##### Setting the *overhide-hub* Programatically
 
 Get an instance of the *overhide-hub* component by instantiating in JavaScript (`document.createElement('overhide-hub')`) or grabbing from the *document* (`document.querySelector(..)`).
@@ -277,42 +301,301 @@ Take a look at the [javascript-hub demo code](/demo-front-end/javascript-hub.htm
 Here, the components wired into the DOM do not have a `hubId=..` attribute specified.  There is no `<overhide-hub id=..>` component in the template.  Everything is done in the `window.onload`:
 
 ```
-
+<script>
+  // Set the token from back-end
+  window.onload = (event) => {
+  fetch(`${BACKEND_CONNECTION_STRING}/GetToken`)
+    .then(async (response) => {
+      if (response.ok) {            
+        const hub = document.createElement('overhide-hub'); 
+        hub.setAttribute('token', await response.text());
+        hub.setAttribute('isTest', true);
+        hub.init();
+        document.querySelector('overhide-login').setHub(hub);
+        document.querySelector('overhide-status').setHub(hub);
+        document.querySelectorAll('overhide-appsell').forEach(e => e.setHub(hub));
+      } else {
+        console.error(`error talking to back-end -- ${response.status} &mdash; ${response.statusText}`);
+      }
+    }).catch(e => console.error(`error talking to back-end -- ${e}`));
+  };
+</script>
 ```
 
-##### Attributes
-
-##### Properties
-
-##### Slots
-
-##### Events
-
-### overhide-login
+- the wiring above is in response to retrieving [a valid token](#enabling-with-token) from the back-end &mdash; the `fetch`
+- we set the *token* on the hub using `setAttribute('token',..)`
+- we optionally set the *isTest* attribute
+- since we're not wiring the *overhide-hub* component into the DOM, we explicitly call `hub.init()`
+- the remaining `document.querySelector..` calls find all the other overhide web-components to set the newly initialized hub against them via their `setHub(..)` method
 
 ##### Attributes
 
-##### Properties
+*isTest*
+
+- set on element to indicate that all transactions/checks should be done against testnets
+- leave out if production / live environment
+
+*apiKey*
+
+- set on element if not providing a token but providing the *apiKey*
+- we do this in the [no-back-end](/demo-front-end/no-back-end.html) and [simplest](/demo-front-end/simplest.html) demos only &mdash; demos where we do not leverage a back-end
+- this allows anyone to see your *apiKey*; in the future we might throttle/black-list basedon *apiKey* (we don't as of yet)
+
+*token*
+
+- set on element to provide a token retrieved via your own back-end
+- most demos do this, see code exaple in [section](#setting-the-overhide-hub-via-dom) above
+- it's preferred&mdash; but not strictly necessary &mdash; to have this indirection in case we start throttling by *apiKey* in the future: this way your *apiKey* is not shared
+
+##### Properties / Methods
+
+See *IOverhideHub* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts).
 
 ##### Slots
 
+N/A &mdash; this is an invisible element and not customizable via slots.
+
 ##### Events
 
-### overhide-appsell
+*overhide-hub-sku-authorization-changed*
+
+- see *IOverhideSkuAuthorizationChangedEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+- indicated a change in authorization status
+
+*overhide-hub-pending-transaction*
+
+- see *IOverhidePendingTransactionEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+- fired when we have a pending transaction. We're waiting for a transaction to finish. 
+- this should be useful for spinners on custom overhide-appsell components.
+- see use in [demos](#demos) when showing the [VISA instructional helper](/dem=o-front-end/assets/visa.png)
+
+```
+// This event fires whenever we're asked to topup funds.
+// We're using it here to show the VISA instructional helper image.
+window.addEventListener('overhide-hub-pending-transaction',(e) => { 
+  console.log(`pending-transaction :: ${JSON.stringify(e.detail, null, 2)}`);
+  if (e.detail.currency == 'dollars') {
+    document.querySelector("#visa").style.opacity = e.detail.isPending ? "1" : "0";
+  }
+}, false);
+```
+
+
+
+### `<overhide-login ..>`
 
 ##### Attributes
 
-##### Properties
+*hubId*
+
+- connect to the one and only hub shared among all components in this eco-system
+- this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+
+*overhideSocialMicrosoftEnabled*
+
+- if set on the element, enables US dollar ledger login / IAPs via Microsoft account social-login
+
+![](/assets/overhideSocialMicrosoftEnabled.png)
+
+- requires that your [overhide-appsell](#overhide-appsell) components specify your *overhideAddress* attribute (you're onboarded onto the overhide-ledger)
+
+*overhideSocialGoogleEnabled*
+
+- if set on the element, enables US dollar ledger login / IAPs via Google account social-login
+
+![](/assets/overhideSocialGoogleEnabled.png)
+
+- requires that your [overhide-appsell](#overhide-appsell) components specify your *overhideAddress* attribute (you're onboarded onto the overhide-ledger)
+
+*overhideEthereumWeb3Enabled*
+
+- if set on the element, enables Ethereum ledger login / IAPs via ethereum wallet such as [MetaMask](https://metamask.io/)
+
+![](/assets/overhideEthereumWeb3Enabled.png)
+
+- requires that your [overhide-appsell](#overhide-appsell) components specify your *ethereumAddress* attribute (you're onboarded onto the overhide-ledger)
+
+*overhideBitcoinEnabled*
+
+- if set on the element, enables Bitcoin ledger login / IAPs via bitcoin signing
+
+![](/assets/overhideBitcoinEnabled.png)
+
+- requires that your [overhide-appsell](#overhide-appsell) components specify your *bitcoinAddress* attribute (you're onboarded onto Bitcoin)
+
+*overhideLedgerEnabled*
+
+- if set on the element, enables US dollar ledger login / IAPs via secret token
+
+![](/assets/overhideLedgerEnabled.png)
+
+- requires that your [overhide-appsell](#overhide-appsell) components specify your *overhideAddress* attribute (you're onboarded onto the overhide-ledger)
+
+##### Properties / Methods
+
+See *IOverhideLogin* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts).
 
 ##### Slots
 
+*closeButton*
+
+- the slot representing the little close button on the login modal
+- can be hidden or re-styled
+
+![](/assets/closeButton.png)
+
+*header*
+
+- allows creating a header at the top of the login modal &mdash; no header by default
+- see custom buttons [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) ([code](/demo-front-end/custom.html)) for example, e.g.
+
+```
+  <overhide-login ..>
+	<div slot="header" class="header-envelope">
+	  <img src="./assets/logo.png" class="header-logo">
+	  <div class="headers">
+		<div class="header">Custom Login</div>
+		<div>(logo + no <em>Google</em> or <em>bitcoin</em>)</div>
+	  </div>
+	</div>
+  </overhide-login>
+```
+
+![](/assets/header.png)
+
 ##### Events
+
+*overhide-login-open*
+
+- emited on modal open
+
+*overhide-login-close*
+
+- emited on modal close
+
+### `<overhide-appsell ..>`
+
+##### Attributes
+
+*hubId*
+
+- connect to the one and only hub shared among all components in this eco-system
+- this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+
+*orientation*
+
+- the customization slots in this element are by default in a vertical orientation, top-to-bottom
+- set this to 'horizontal' if the slots are to be oriented left-to-right
+
+*sku*
+
+- a unique name for the feature being authorized using this button
+
+*priceDollars*
+
+- US dollars and cents as the cost of this feature
+- the amount is always specified in US dollars, the system converts to necessary ethers or bitcoins
+
+*loginMessage* 
+
+- if this button is supposed to be an overall login button, specify this message
+- if this message is specified, do not specify any other attributes other than the *hubId*
+- this message is shown in the *authorized-button* and *unauthorized-button* slots
+
+*authorizedMessage*
+
+- the button label to show in the *authorized-button* slot when this feature is authorized
+
+*unauthorizedTemplate*
+
+- the button label to show in the *unauthorized-button* slot when this feature is not yet authorized
+- the `${topup}` placeholder can be used in the template to show the outstanding amount of US dollars &mdash; how much the user need to pay to authorize
+
+*inhibitLogin*
+
+- if provided on the element, do not allow the user to login using this button when clicked, and the user is not yet logged in
+- this is useful if you do not want users to login using the feature buttons, only an explicit *overhide-appsell* button with a *loginMessage* attribute set
+
+*bitcoinAddress*
+
+- the bitcoin address into which paid bitcoins are deposited &mdash; and which is checked for sufficient monies paid to authorize
+- ⚠ do not have too many distinct bitcoin addresses in your rendered route / page
+  - usually it's recommended you have one per rendered route (e.g. hitting F5 will cause a single request)
+  - all addresses are checked for topups and the APIs are rate-limited per IP
+  - your users will start getting [429 - Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) if too many addresses are provided and they're all checked on refresh
+
+*ethereumAddress*
+
+- the ethereum address into which paid ethers are deposited &mdash; and which is checked for sufficient monies paid to authorize
+- ⚠ do not have too many distinct ethereum addresses in your rendered route / page
+  - usually it's recommended you have one per rendered route (e.g. hitting F5 will cause a single request)
+  - all addresses are checked for topups and the APIs are rate-limited per IP
+  - your users will start getting [429 - Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) if too many addresses are provided and they're all checked on refresh
+
+*overhideAddress*
+
+- the US dollars ledger address which shows receipts for deposited payments &mdash; and which is checked for sufficient monies paid to authorize
+- ⚠ do not have too many distinct overhide addresses in your rendered route / page
+  - usually it's recommended you have one per rendered route (e.g. hitting F5 will cause a single request)
+  - all addresses are checked for topups and the APIs are rate-limited per IP
+  - your users will start getting [429 - Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) if too many addresses are provided and they're all checked on refresh
+
+*withinMinutes*
+
+- specifies the number of minutes the feature should be authorized once sufficient *priceDollars* is paid
+- this is useful for subscription features
+- in our demos we usually have one button that expires after 30 minutes
+- leave out for indefinite &mdash; default
+
+See *IOverhideAppsell* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts).
+
+##### Slots
+
+These elements have three slots for authorized  versions of each button and three slots for unauthorized versions of each button.
+
+The authorized versions are shown when sufficient monies have been paid to authorize the feature.
+
+The authorized slots are:
+
+- *authorized-header*
+- *authorized-button*
+- *authorized-footer*
+
+The unauthorized slots are:
+
+- *unauthorized-header*
+- *unauthorized-button*
+- *unauthorized-footer*
+
+By default nothing is rendered in the *-header* or the *-footer* slots, all rendering is done in the *-button* slot.  E.g. the various messages from the attributes are rendered in the *authorized-button* or *unauthorized-button*.
+
+The content of the *authorized-button* and *unauthorized-button* slots are overwritten by the *loginMessage*, *authorizedMessage* and *unauthorizedTemplate* attributes.  These slots are only useful for styling the messages.  To modify the look and feel beyond that, use the *-header* and *-footer* slots.
+
+See the 
+
+##### Events
+
+*overhide-appsell-topup-outstanding*
+
+- see *IOverhideSkuTopupOutstandingEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+- an event fired by an overhide-appsell component when there was an authorization attempt but insufficient funds to authorize
+- this even contains the outstanind topup funds required
 
 ### overhide-status
 
 ##### Attributes
 
-##### Properties
+*hubId*
+
+- connect to the one and only hub shared among all components in this eco-system
+- this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+
+##### Properties / Methods
+
+See *IOverhideStatus* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts).
 
 ##### Slots
 
@@ -385,10 +668,3 @@ The you can try hitting the local AZ functions with:
 > - https://demo-back-end.azurewebsites.net/api/gettoken -- provides the [overhide token](https://token.overhide.io/swagger.html) for use with `<overhide-hub ..>` component.
 > - There is also the main `https://demo-back-end.azurewebsites.net/api/RunFeature` endpoint is used by the demo front-ends (see [/demo-front-end/index.js](/demo-front-end/index.js)).
 
-### Customizing
-
-The *overhide-status* widget is not customizable.
-
-The *overhide-hub* component is non-visible hence not customizable.
-
-Out of the box the buttons are grey.
