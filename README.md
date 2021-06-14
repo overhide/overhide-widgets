@@ -140,8 +140,8 @@ We have several component demo files in [/demo-front-end](/demo-front-end):
 
 - basic:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)
 - no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html) (no [back-end](#back-end))
-- custom buttons: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html) (see [Customizing](#customizing) section below)
-- [/demo-react-app/react-app.html](/demo-react-app/react-app.html)
+- custom buttons: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html) (see [slots](#slots-2) section of the [overhide-appsell](#overhide-appsell) component below)
+- javascript-hub: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/javascript-hub.html) | [code](/demo-front-end/javascript-hub.html) (hub wired via script instead of DOM)
 - simplest:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html) (just one button, no [back-end](#back-end))
 
 
@@ -155,7 +155,7 @@ Most demos show:
   - $2 up-sell
   - $3 subscription for 30 minutes
 
-Everything is optional except for the non-visible [overhide-hub](#overhide-hub)  web-component that can be wired via DOM or JavaScript (see the [react-app demo](/demo-ract-app/react-app.html) for JS wiring).
+Everything is optional except for the non-visible [overhide-hub](#overhide-hub)  web-component that can be wired via DOM or JavaScript (see the [javascript-hub demo](/demo-front-end/javascript-hub.html) for JS wiring).
 
 You could just have a single up-sell / in-app purchase button, no status, no explicit login, and it will allow all the functionality (see "simplest"  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)).
 
@@ -239,7 +239,7 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 }
 ```
 
-See [/demo-react-app](/demo-react-app).
+~~See [/demo-react-app](/demo-react-app).~~ (TBD)
 
 ## Widget Reference
 
@@ -360,11 +360,26 @@ N/A &mdash; this is an invisible element and not customizable via slots.
 *overhide-hub-sku-authorization-changed*
 
 - see *IOverhideSkuAuthorizationChangedEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+
+```
+export interface IOverhideSkuAuthorizationChangedEvent {
+  isAuthorized: boolean;
+}
+```
+
 - indicated a change in authorization status
 
 *overhide-hub-pending-transaction*
 
 - see *IOverhidePendingTransactionEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+
+```
+export interface IOverhidePendingTransactionEvent {
+  isPending: boolean;
+  currency: string | null;
+}
+```
+
 - fired when we have a pending transaction. We're waiting for a transaction to finish. 
 - this should be useful for spinners on custom overhide-appsell components.
 - see use in [demos](#demos) when showing the [VISA instructional helper](/dem=o-front-end/assets/visa.png)
@@ -383,6 +398,14 @@ window.addEventListener('overhide-hub-pending-transaction',(e) => {
 
 
 ### `<overhide-login ..>`
+
+The login widget.
+
+The available login providers can be customized here.
+
+This component must be in your DOM, the other components such as [overhide-appsell](#overhide-appsell) and [overhide-status](#overhide-status) will trigger this component to raise a modal showing login providers &mdash; when necessary.
+
+All login providers configured here should have corresponding addresses configured on all your [overhide-appsell](#overhide-appsell) buttons.
 
 ##### Attributes
 
@@ -475,6 +498,16 @@ See *IOverhideLogin* in [/src/components/hub/definitions.ts](/src/components/hub
 - emited on modal close
 
 ### `<overhide-appsell ..>`
+
+The main buttons that enable authorized features in your application.
+
+Clicking on a feature button when not logged in causes login unless the *inhibitLogin* attribute is specified.
+
+Clicking on a feature that isn't authorized triggers the authorization flow (in-app purchase).
+
+Clicking on a feature that's authorized raises the *overhide-appsell-sku-clicked* event in response to which the feature-flow can continue to your back-end and be re-verified (for authorizations).
+
+These widgets are fully customizable through [slots](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot).
 
 ##### Attributes
 
@@ -573,17 +606,64 @@ By default nothing is rendered in the *-header* or the *-footer* slots, all rend
 
 The content of the *authorized-button* and *unauthorized-button* slots are overwritten by the *loginMessage*, *authorizedMessage* and *unauthorizedTemplate* attributes.  These slots are only useful for styling the messages.  To modify the look and feel beyond that, use the *-header* and *-footer* slots.
 
-See the 
+See the [custom buttons demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) ([code](/demo-front-end/custom.html)) for examples.
 
 ##### Events
+
+*overhide-appsell-sku-clicked*
+
+- see *IOverhideSkuClickedEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+
+```
+ export interface IOverhideSkuClickedEvent {
+  sku: string,
+  message: string,
+  signature: string,
+  from: string,
+  to: string,
+  currency: Currency,
+  isTest: boolean,
+  asOf: string
+}
+```
+
+- the event fired by an overhide-appsell component when an appsell SKU deemed authorized by overhide is clicked by the user
+- usually safest to route state-changes in response to this event via the back-end, and validate authorizations
+- all necessary information to validate is provided in this event
+- ⚠ passing the `asOf` timestamp to your back-end is an important optimization. The overhide \* services already checked these transactions as part of this front-end work. The `asOf` timestamp ensures we re-load these resutls from cache and do not get rate-limited in the back-end.
+- example:
+
+```
+    <script>
+      window.addEventListener('overhide-appsell-sku-clicked',(e) => { /* react to feature being used, only if, auth'ed */ });
+    </script>
+```
 
 *overhide-appsell-topup-outstanding*
 
 - see *IOverhideSkuTopupOutstandingEvent* in [/src/components/hub/definitions.ts](/src/components/hub/definitions.ts)
+
+```
+export interface IOverhideSkuTopupOutstandingEvent {
+  sku: string,
+  topup: number
+}
+```
+
 - an event fired by an overhide-appsell component when there was an authorization attempt but insufficient funds to authorize
 - this even contains the outstanind topup funds required
 
-### overhide-status
+### `<overhide-status ..>`
+
+A very simple widget usually provided in the nav-bar of an application.
+
+Shows the currently logged in address and against which login provider (icon).
+
+Allows manually refreshing payments and a logout button.
+
+When logged in, clicking the address shows a transaction history.
+
+When logged out, clicking the "sign-in" text triggers login.
 
 ##### Attributes
 
@@ -599,7 +679,11 @@ See *IOverhideStatus* in [/src/components/hub/definitions.ts](/src/components/hu
 
 ##### Slots
 
+N/A
+
 ##### Events
+
+N/A
 
 ### Local Development
 
