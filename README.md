@@ -223,7 +223,7 @@ You can see all the [/demo-front-end/*.html](/demo-front-end) demos load it this
 <script src="https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js"></script>
 ```
 
-For a specific version, e.g. version *1.0.5*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.5/dist/overhide-widgets.js`
+For a specific version, e.g. version *1.0.6*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.6/dist/overhide-widgets.js`
 
 The widgets can then be used in your DOM and via your framework JavaScript.
 
@@ -234,7 +234,7 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 "dependencies": {
   ..
-  "overhide-widgets": "1.0.5",
+  "overhide-widgets": "1.0.6",
   ..
 }
 ```
