@@ -138,11 +138,13 @@ The reminder of the steps are actual code changes in your Web application.
 
 We have several component demo files in [/demo-front-end](/demo-front-end):
 
-- basic:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)
-- no back-end: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html) (no [back-end](#back-end))
-- custom buttons: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html) (see [slots](#slots-2) section of the [overhide-appsell](#overhide-appsell) component below)
-- javascript-hub: [demo](https://overhide.github.io/overhide-widgets/demo-front-end/javascript-hub.html) | [code](/demo-front-end/javascript-hub.html) (hub wired via script instead of DOM)
-- simplest:  [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html) (just one button, no [back-end](#back-end))
+| **Demo Name**  | **Link**                                                     | **Code**                                    | **Uses Back-End** | **Notes**                                                    |
+| -------------- | ------------------------------------------------------------ | ------------------------------------------- | ----------------- | ------------------------------------------------------------ |
+| basic          | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)          | ✔                 | the basic demo &mdash; *overhide-status* in the nav-bar, a login button, 3 feature buttons. |
+| no back-end    | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)    | ✖                 | a no  [back-end](#back-end) demo, everything just in-browser &mdash; same as basic otherwise |
+| custom buttons | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html)         | ✔                 | same as basic demo but the login button has different colors and the feature buttons are ice cream desserts &mdash; see [slots](#slots-2) section of the [overhide-appsell](#overhide-appsell) component below |
+| javascript-hub | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/javascript-hub.html) | [code](/demo-front-end/javascript-hub.html) | ✔                 | same as basic demo but the *overhide-hub* component is not in the DOM, it's wired in via script |
+| simplest       | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html)       | ✖                 | bare bones single button demo &mdash; the simplest demo, no [back-end](#back-end) |
 
 
 
