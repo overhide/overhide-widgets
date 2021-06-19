@@ -14,7 +14,7 @@
     "noEmitOnError": true,
     "skipLibCheck": true,
     "preserveConstEnums": true,
-    "stripInternal": true,
+    "stripInternal": false,
     "strict": true,
     "outDir": "dist",
     "rootDir": "src",

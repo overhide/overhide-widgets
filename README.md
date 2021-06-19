@@ -235,15 +235,15 @@ All demos below show one or the other.
 
 You can include *overhide-widgets* via CDN:
 
-* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.9/dist/overhide-widgets.js`
+* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.10/dist/overhide-widgets.js`
 
 You can see all the [/demo-front-end/*.html](/demo-front-end) demos load it this way:
 
 ```
-<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.9/dist/overhide-widgets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.10/dist/overhide-widgets.js"></script>
 ```
 
-In our demos we specifically load the latest version, e.g. version *1.0.9*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.9/dist/overhide-widgets.js`
+In our demos we specifically load the latest version, e.g. version *1.0.10*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.10/dist/overhide-widgets.js`
 
 The widgets can then be used in your DOM and via your framework JavaScript.
 
@@ -254,7 +254,7 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 "dependencies": {
   ..
-  "overhide-widgets": "1.0.9",
+  "overhide-widgets": "1.0.10",
   ..
 }
 ```
