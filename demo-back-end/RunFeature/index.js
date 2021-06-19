@@ -9,7 +9,8 @@ const overhide = require('../SharedCode/overhide.js');
  *   - 'currency', one of 'dollars', 'ethers', 'bitcoins'
  *   - 'from', ledger specific address of the customer (the 'from')
  *   - 'message', message signed to prove ownership of 'address'  (NOTE, this is base64 encoded)
- *   - 'signature', signature of 'message' for 'address'
+ *   - 'signature', signature of 'message' for 'from'
+ *   - 'isTest', whether testnet ledgers should be used for authorization
  */
 module.exports = async function (context, req) {
 

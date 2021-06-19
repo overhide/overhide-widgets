@@ -16,7 +16,7 @@ The authentication and authorization mechanism used herein is the [Ledger-Based 
 
 
 
-How simple is it to put IAPs in your Web application?  Check out this "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) &mdash; it's essentially:
+It's simple to add IAPs to your Web application &mdash; check out the "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) &mdash; it's essentially:
 
 ```
 <html>
@@ -55,11 +55,11 @@ How simple is it to put IAPs in your Web application?  Check out this "simplest"
 
 
 
-Just the above three web-components in an HTML page is all that's needed for the simplest authentication and authorization scenarios &mdash; allowing you to get paid ($2 in the above sample).  The components use the [legers.js library](https://www.npmjs.com/package/ledgers.js) library and [renumeration APIs](https://overhide.io/2020/09/06/remuneration-api.html) to provide all functionality.
+The above three web-components in an HTML page are all that's needed for the simplest authentication and authorization scenarios &mdash; allowing you to get paid ($2 in the above sample).  The components use the [legers.js library](https://www.npmjs.com/package/ledgers.js) library and [renumeration APIs](https://overhide.io/2020/09/06/remuneration-api.html) to provide all functionality.
 
-Now, of course, the simplest example above doesn't use a back-end and all code sits fully decompilable in the browser.  It's useful for some scenarios, but for other scenarios you will want to [re-check authorizations in your back-end code and have feature-flows run through a back-end](https://overhide.io//2019/03/27/authorizations-and-exposed-source-code.html).
+Now, of course, the simplest example above is limited, it doesn't use a back-end and all code sits fully decompilable in the browser.  It's useful for some scenarios, but for other scenarios you will want to [re-check authorizations in your back-end code and have feature-flows run through a back-end](https://overhide.io//2019/03/27/authorizations-and-exposed-source-code.html).
 
-Most demos in this repo use feature-flows through a simple back-end that's provided as the [/demo-back-end](/demo-back-end) node.js application &mdash; that also runs in [Azure functions](https://azure.microsoft.com/en-us/services/functions/).  You can base your own back-end off of these samples, it's very little code.
+Most demos in this repo have business flows incorporating a simple back-end.  The back-end is provided as the [/demo-back-end](/demo-back-end) node.js application &mdash; that also runs in [Azure functions](https://azure.microsoft.com/en-us/services/functions/).  You can base your own back-end off of these samples, it's very little code.
 
 
 
@@ -67,7 +67,15 @@ The below infographic conveys at-a-glance what you get with these widgets:
 
 <p align="center"><a href="https://overhide.github.io/overhide-widgets/assets/widgets.svg" target="_blank"><img src="https://overhide.github.io/overhide-widgets/assets/widgets.svg" width="75%"/></a></p>
 
-The top-left shows a sample Web app with a nav-bar housing the [overhide-status](#overhide-status) component.
+The top-left shows a sample Web app with a nav-bar housing the [overhide-status](#overhide-status) component.  It also shows three purchase buttons.  Clicking any of these will open up the [overhide-login](#overhide-login-) component which serves as our "login widget".
+
+When a user wants to authorize for a feature; different UI experiences will present themselves depending on whether the feature is free, the user wants to pay in dollars, or the user wants to pay using a wallet, e.g., above, see:
+
+- anti-bot authentication
+- purchase for dollars
+- puchase with crypto wallet
+
+A logged in user can check their previous payments in new browser tabs &mdash; UI experiences vary by currency/wallet.
 
 ## Quick Start
 
@@ -75,7 +83,7 @@ To use these widgets in your Web app follow the steps below.
 
 Don't just read these steps, follow along copying/looking-at the [demos](#demos).
 
-The first three steps are gathering metadata necessary to setup how you get paid.
+The first three steps are gathering metadata necessary to setup how you, the developer, get paid.
 
 The reminder of the steps are actual code changes in your Web application.
 
@@ -84,9 +92,9 @@ The reminder of the steps are actual code changes in your Web application.
 1. onboard onto the dollar-ledger to get your US-dollar-ledger address ([production](https://ledger.overhide.io/onboard) | [testnet](https://test.ledger.overhide.io/onboard))
 
    - optional, you don't need this if you just want to accept cryptos or don't want in-app purchases at all (just authentication)
-
+  - but, keep in mind, it's too early to just accept cryptos &mdash; most people online won't have any just yet and it's prudent to give them the option to pay in dollars
    - you will create a new [Stripe](https://stripe.com) account or connect your existing [Stripe](https://stripe.com) account
-   - you will provide the above address as the *overhideAddress* attribute in all your [overhide-appsell](#overhide-appsell) components
+   - you will provide the above address as the *overhideAddress* attribute in all your [overhide-appsell](#overhide-appsell) components (the feature buttons)
 
 2. onboard onto Ethereum (optional, recommended)
 
@@ -102,7 +110,7 @@ The reminder of the steps are actual code changes in your Web application.
 
 5. add an [overhide-hub](#overhide-hub) component to your DOM or [initialize programatically](#setting-the-overhide-hub-programatically)
 
-   - configure the *id* attribute if other components will de-reference this hub via their *hubId* attribtues, otherwise you will call the *setHub(..)* explicitly on each of those components from script
+   - assign an *id* attribute to the hub if other components will de-reference this hub via their *hubId* attribtues; otherwise, call the *setHub(..)* explicitly on each of those components from script
    - configure the *token* attribute or *apiKey* (see [Enabling with Token](#enabling-with-token))
    - specify the *isTest* attribute if this is a testnet application, otherwise leave it out
 
@@ -119,7 +127,7 @@ The reminder of the steps are actual code changes in your Web application.
 
 7. add an [overhide-appsell](#overhide-appsell) component as an explicit "login" button (non-feature) to your DOM
 
-   1. optional, as the feature buttons can do this work
+   1. optional, as the feature buttons &mdash; when clicked &mdash;  will login your users if they're not yet logged in
    2. configure the *id* of the [overhide-hub](#overhide-hub) element via the *hubId*, or call this elements's *setHub(..)* setter to set the hub element programatically
    3. do not provide any [overhide-appsell](#overhide-appsell) attrubutes except for the *hubId* (above) and the *loginMessage*
 
@@ -167,15 +175,25 @@ The [/demo-front-end/no-back-end.html](/demo-front-end/no-back-end.html) shows t
 
 ##### Back-End
 
-Most demos run their feature-flows via our  [/demo-back-end](/demo-back-end): when a user clicks a feature, the back-end is interrogated to complete the feature flow.  The back-end verifies authentication and authorization as per credentials provided and monies paid on a ledger of choice.
+Most demos run their feature-flows via our  [/demo-back-end](/demo-back-end): when a user clicks a feature, the back-end is interrogated to complete the feature flow.  
+
+Note that the back-end verifies authentication and authorization as per credentials provided and monies paid on a ledger of choice.
 
 The back-end serves three purposes on behalf of our front-ends:
 
-- retrieves [an overhide token](https://token.overhide.io/swagger.html) for use with *overhide* API -- browser can call to get the token and provide to [overhide-hub](#overhide-hub)  component.
+- retrieves [an overhide token](https://token.overhide.io/swagger.html) for use with *overhide* APIs &mdash; browser front-end code calls this to get the token and provide to the [overhide-hub](#overhide-hub)  component.
 - retrieves the fees-schedule (not actually leveraged in demos for simplicity, but provided for completness)
-- runs the feature-flows on the back-end when corresponding feature button clicked in the front-end (`/RunFeature` endpoints)
+  - usually you'll want a single source of truth for your feature fees schedule
+- runs the feature-flow business logic on the back-end when corresponding feature button clicked in the front-end (`/RunFeature` endpoints)
   - has a bunch of mandatory `query` parameters to authenticate and authorize
   - feature will not run if bad authentication or insufficient funds on ledger for feature (as per parameters): will result in "Unauthorized by Ledger-Based AuthZ-" response.
+  - the back-end calls [overhide APIs](https://overhide.io/2020/09/06/remuneration-api.html) to check authorizations, and requires the following pieces of information from  the front-end (the `/RunFeature` query parameters):
+    - *sku* &mdash; the feature name / tag to derefernce fees schedule
+    - *currency* &mdash; one of 'dollars', 'ethers', 'bitcoins'
+    - *from* &mdash; ledger specific address of the customer (the 'from')
+    - *message* &mdash; message signed to prove ownership of *address* (NOTE, this is base64 encoded)
+    - *signature* &mdash; signature of *message* for *from*
+    - *isTest* &mdash; whether testnet ledgers should be used for authorization
 
 The endpoints for these are discussed in the [Local Development](#local-development) section below.
 
@@ -197,7 +215,7 @@ All of the above demos &mdash; with the exception of the *no-back-end* and *sim
 
 The *overhide-widgets* 'dist' folder contains the distributable artifact.
 
-You'll likely want to [import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) the library along with its dependencies ([ledgers.js](https://www.npmjs.com/package/ledgers.js), [web3.js](https://github.com/ethereum/web3.js/)).
+You'll likely want to [import](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) the library in your script code.
 
 Within your front-end projects; using *npm* simply:  `npm install overhide-widgets --save-prod`.
 
@@ -217,15 +235,15 @@ All demos below show one or the other.
 
 You can include *overhide-widgets* via CDN:
 
-* `https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js`
+* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.8/dist/overhide-widgets.js`
 
 You can see all the [/demo-front-end/*.html](/demo-front-end) demos load it this way:
 
 ```
-<script src="https://cdn.jsdelivr.net/npm/overhide-widgets/dist/overhide-widgets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.8/dist/overhide-widgets.js"></script>
 ```
 
-For a specific version, e.g. version *1.0.6*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.6/dist/overhide-widgets.js`
+In our demos we specifically load the latest version, e.g. version *1.0.8*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.8/dist/overhide-widgets.js`
 
 The widgets can then be used in your DOM and via your framework JavaScript.
 
@@ -236,12 +254,12 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 "dependencies": {
   ..
-  "overhide-widgets": "1.0.6",
+  "overhide-widgets": "1.0.8",
   ..
 }
 ```
 
-~~See [/demo-react-app](/demo-react-app).~~ (TBD)
+
 
 ## Widget Reference
 
@@ -291,6 +309,7 @@ Otherwise, provide the *overhide-hub* element with a token as per all the other 
 
 - the wiring above is in response to retrieving [a valid token](#enabling-with-token) from the back-end &mdash; the `fetch`
 - we set the *token* on the hub using `setAttribute('token',..)`
+- the `BACKEND_CONNECTION_STRING` points at our back-end server (see [Target a Back-End](#target-a-back-end) section)
 
 ##### Setting the *overhide-hub* Programatically
 
@@ -326,9 +345,12 @@ Here, the components wired into the DOM do not have a `hubId=..` attribute speci
 
 - the wiring above is in response to retrieving [a valid token](#enabling-with-token) from the back-end &mdash; the `fetch`
 - we set the *token* on the hub using `setAttribute('token',..)`
+- the `BACKEND_CONNECTION_STRING` points at our back-end server (see [Target a Back-End](#target-a-back-end) section)
 - we optionally set the *isTest* attribute
 - since we're not wiring the *overhide-hub* component into the DOM, we explicitly call `hub.init()`
 - the remaining `document.querySelector..` calls find all the other overhide web-components to set the newly initialized hub against them via their `setHub(..)` method
+
+##### 
 
 ##### Attributes
 
@@ -403,7 +425,7 @@ window.addEventListener('overhide-hub-pending-transaction',(e) => {
 
 The login widget.
 
-The available login providers can be customized here.
+The login providers you want to make available to your users can be customized here.
 
 This component must be in your DOM, the other components such as [overhide-appsell](#overhide-appsell) and [overhide-status](#overhide-status) will trigger this component to raise a modal showing login providers &mdash; when necessary.
 
@@ -415,7 +437,7 @@ All login providers configured here should have corresponding addresses configur
 
 - connect to the one and only hub shared among all components in this eco-system
 - this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
-- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
 
 *overhideSocialMicrosoftEnabled*
 
@@ -517,7 +539,7 @@ These widgets are fully customizable through [slots](https://developer.mozilla.o
 
 - connect to the one and only hub shared among all components in this eco-system
 - this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
-- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
 
 *orientation*
 
@@ -630,9 +652,9 @@ See the [custom buttons demo](https://overhide.github.io/overhide-widgets/demo-f
 ```
 
 - the event fired by an overhide-appsell component when an appsell SKU deemed authorized by overhide is clicked by the user
-- usually safest to route state-changes in response to this event via the back-end, and validate authorizations
+- usually safest to route state-changes in response to this event via a back-end &mdash; and let the back-end re-validate authorizations
 - all necessary information to validate is provided in this event
-- ⚠ passing the `asOf` timestamp to your back-end is an important optimization. The overhide \* services already checked these transactions as part of this front-end work. The `asOf` timestamp ensures we re-load these resutls from cache and do not get rate-limited in the back-end.
+- ⚠ passing the `asOf` timestamp to your back-end &mdash; and having your back-end pass this value to [overhide APIs](https://overhide.io/2020/09/06/remuneration-api.html) when checking authorizations &mdash; is an important optimization. Since the *overhide* services already recently checked these transactions as part of this front-end work; the `asOf` timestamp ensures we re-load these resutls from cache and do not get rate-limited in the back-end.
 - example:
 
 ```
@@ -653,7 +675,7 @@ export interface IOverhideSkuTopupOutstandingEvent {
 ```
 
 - an event fired by an overhide-appsell component when there was an authorization attempt but insufficient funds to authorize
-- this even contains the outstanind topup funds required
+- this even contains the outstanind topup funds required: in US dollars
 
 ### `<overhide-status ..>`
 
@@ -673,7 +695,7 @@ When logged out, clicking the "sign-in" text triggers login.
 
 - connect to the one and only hub shared among all components in this eco-system
 - this is the actual element ID of the [overhide-hub](#overhide-hub) in the document model
-- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method, see below (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
+- if the [overhide-hub](#overhide-hub) is not in the DOM or doesn't have an ID, you'll need to use the `setHub(..)` method (see [setting the hub programatically](#setting-the-overhide-hub-programatically)).
 
 ##### Properties / Methods
 
@@ -705,12 +727,12 @@ Modify this constant as needed.
 
 > ⚠ The [/demo-front-end/no-back-end.html](/demo-front-end/no-back-end.html) doesn't use a back-end &mdash; shows use of widgets without a back-end, the back-end setup can be ignored for this one.
 
-The [./demo-back-end](./demo-back-end) folder has all the code for the back-end, whether it runs using node locally on your development machin or as an [Azure Function](https://azure.microsoft.com/en-us/services/functions/) (how the demos are hosted).
+The [./demo-back-end](./demo-back-end) folder has all the code for a minimal back-end, whether it runs using node.js locally on your development machine or as an [Azure Function](https://azure.microsoft.com/en-us/services/functions/) (how these demos are hosted).
 
 To start running the back-end on your local development machine:
 
 1. prerequesites:
-   - node
+   - node.js
 1. open a console to the [./demo-back-end](./demo-back-end) subfolder of this repo
 1. `npm install`
 1. `npm run dev`
@@ -726,7 +748,7 @@ You can try hitting it with:
 Alternativelly, if you want to leverage the [Azure Function](https://azure.microsoft.com/en-us/services/functions/) core tooling:
 
 1. prerequesites:
-   - node
+   - node.js
    - Azure Functions core tools:  `npm install -g azure-functions-core-tools@3 --unsafe-perm true`
 1. open a console to the [./demo-back-end](./demo-back-end) subfolder of this repo
 1. `npm install`
@@ -741,7 +763,7 @@ The you can try hitting the local AZ functions with:
 
 > ASIDE: deploying to [Azure Functions](https://azure.microsoft.com/en-us/services/functions/): 
 >
-> if you followed the latter, just deploy using:
+> if you followed the latter, you can deploy to Azure using:
 >
 > ```
 > az login
