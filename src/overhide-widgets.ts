@@ -13,3 +13,15 @@ export * from "./components/hub/definitions";
 export * from "./components/status/component";
 export * from "./components/login/component";
 export * from "./components/appsell/component";
+
+// For React w/TypeScript 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'overhide-hub': any;
+      'overhide-appsell': any;
+      'overhide-status': any;
+      'overhide-login': any;
+    }
+  }
+}
