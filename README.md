@@ -16,7 +16,7 @@ The authentication and authorization mechanism used herein is the [Ledger-Based 
 
 
 
-It's simple to add IAPs to your Web application &mdash; check out the "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) &mdash; it's essentially:
+It's simple to add IAPs to your Web application &mdash; 🎈 check out the "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) 🎈 &mdash; it's essentially:
 
 ```
 <html>
