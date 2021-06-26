@@ -442,6 +442,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     }
 
     this.paymentsInfo.skuComponents[sku] = component;
+    this.pingApplicationState();
   }
 
   public getComponentForSku = (sku: string): IOverhideAppsell | null => {

@@ -1,6 +1,12 @@
+
+
 <p align="center"><a href="https://overhide.io"><img src="https://overhide.github.io/overhide-widgets/assets/logo.png" width="200px"/></a></p>
 
+
+
 <p align="center"><a href="https://overhide.io">overhide.io</a></p><p style="width: 500px; margin: auto">A free and open-sourced (mostly) ecosystem of widgets, a front-end library, and back-end services &mdash; to make addition of "logins" and "in-app-purchases" (IAP) to your app as banal as possible.</p>
+
+
 
 <hr/>
 
@@ -16,7 +22,11 @@ The authentication and authorization mechanism used herein is the [Ledger-Based 
 
 
 
-It's simple to add IAPs to your Web application &mdash; 🎈 check out the "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html)) 🎈 &mdash; it's essentially:
+👁👁  For the impatient, jump to the [demos](#demos).
+
+
+
+It's simple to add IAPs to your Web application &mdash;  check out the "simplest" [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) ([code](/demo-front-end/simplest.html))  &mdash; it's essentially:
 
 ```
 <html>
@@ -76,6 +86,18 @@ When a user wants to authorize for a feature; different UI experiences will pres
 - puchase with crypto wallet
 
 A logged in user can check their previous payments in new browser tabs &mdash; UI experiences vary by currency/wallet.
+
+
+
+> ## Framework Users -- React.js, Angular, Vue.js, ...
+>
+> These are standard Web components written using [FAST](https://www.fast.design/).
+>
+> They [can be incorporated into any framework](https://www.fast.design/docs/integrations/introduction).
+>
+> An example/demo of these components used in a React.js app is provided in its own repository: [overhide-widgets React.js Demo app](https://github.com/overhide/overhide-widgets-react-demo-app).
+
+
 
 ## Quick Start
 
@@ -146,13 +168,14 @@ The reminder of the steps are actual code changes in your Web application.
 
 We have several component demo files in [/demo-front-end](/demo-front-end):
 
-| **Demo Name**  | **Link**                                                     | **Code**                                    | **Uses Back-End** | **Notes**                                                    |
-| -------------- | ------------------------------------------------------------ | ------------------------------------------- | ----------------- | ------------------------------------------------------------ |
-| basic          | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)          | ✔                 | the basic demo &mdash; *overhide-status* in the nav-bar, a login button, 3 feature buttons. |
-| no back-end    | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)    | ✖                 | a no  [back-end](#back-end) demo, everything just in-browser &mdash; same as basic otherwise |
-| custom buttons | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html)         | ✔                 | same as basic demo but the login button has different colors and the feature buttons are ice cream desserts &mdash; see [slots](#slots-2) section of the [overhide-appsell](#overhide-appsell) component below |
-| javascript-hub | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/javascript-hub.html) | [code](/demo-front-end/javascript-hub.html) | ✔                 | same as basic demo but the *overhide-hub* component is not in the DOM, it's wired in via script |
-| simplest       | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html)       | ✖                 | bare bones single button demo &mdash; the simplest demo, no [back-end](#back-end) |
+| **Demo Name**                                                | **Link**                                                     | **Code**                                                     | **Uses Back-End** | **Notes**                                                    |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------------- | ------------------------------------------------------------ |
+| basic                                                        | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/basic.html) | [code](/demo-front-end/basic.html)                           | ✔                 | the basic demo &mdash; *overhide-status* in the nav-bar, a login button, 3 feature buttons. |
+| no back-end                                                  | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/no-back-end.html) | [code](/demo-front-end/no-back-end.html)                     | ✖                 | a no  [back-end](#back-end) demo, everything just in-browser &mdash; same as basic otherwise |
+| custom buttons                                               | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/custom.html) | [code](/demo-front-end/custom.html)                          | ✔                 | same as basic demo but the login button has different colors and the feature buttons are ice cream desserts &mdash; see [slots](#slots-2) section of the [overhide-appsell](#overhide-appsell) component below |
+| javascript-hub                                               | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/javascript-hub.html) | [code](/demo-front-end/javascript-hub.html)                  | ✔                 | same as basic demo but the *overhide-hub* component is not in the DOM, it's wired in via script |
+| simplest                                                     | [demo](https://overhide.github.io/overhide-widgets/demo-front-end/simplest.html) | [code](/demo-front-end/simplest.html)                        | ✖                 | bare bones single button demo &mdash; the simplest demo, no [back-end](#back-end) |
+| ![](./assets/react.png)<br /><br />[overhide-widgets React.js Demo app](https://github.com/overhide/overhide-widgets-react-demo-app) | [demo](https://github.com/overhide/overhide-widgets-react-demo-app) | [code](https://github.com/overhide/overhide-widgets-react-demo-app) | ✔                 | React.js version of these demos.                             |
 
 
 
@@ -235,15 +258,15 @@ All demos below show one or the other.
 
 You can include *overhide-widgets* via CDN:
 
-* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.12/dist/overhide-widgets.js`
+* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.13/dist/overhide-widgets.js`
 
 You can see all the [/demo-front-end/*.html](/demo-front-end) demos load it this way:
 
 ```
-<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.12/dist/overhide-widgets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.13/dist/overhide-widgets.js"></script>
 ```
 
-In our demos we specifically load the latest version, e.g. version *1.0.12*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.12/dist/overhide-widgets.js`
+In our demos we specifically load the latest version, e.g. version *1.0.13*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.13/dist/overhide-widgets.js`
 
 The widgets can then be used in your DOM and via your framework JavaScript.
 
@@ -254,7 +277,7 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 "dependencies": {
   ..
-  "overhide-widgets": "1.0.12",
+  "overhide-widgets": "1.0.13",
   ..
 }
 ```
