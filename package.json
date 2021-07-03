@@ -1,12 +1,16 @@
 {
   "name": "overhide-widgets",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "",
   "main": "dist/overhide-widgets.js",
   "types": "dist/overhide-widgets.d.ts",
   "files": [
     "/dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/overhide/overhide-widgets.git"
+  },  
   "scripts": {
     "build": "rimraf dist && webpack --config webpack.config.js --mode=production",
     "dev": "webpack-dev-server",
