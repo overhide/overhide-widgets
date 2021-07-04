@@ -162,7 +162,7 @@ export class OverhideBtcManual extends FASTElement {
 
   setInvalidMessage() {
     this.messageClass = 'invalidMessage';
-    const network = this.hub ? this.hub.getNetwork(Imparter.btcManual) ? `<b>for testnet</b>` : `<b>for mainnet</b>` : ``;
+    const network = this.hub ? this.hub.getNetworkType() == NetworkType.test ? `<b>for testnet</b>` : `<b>for mainnet</b>` : ``;
     this.message = html`The address must be a valid bitcoin address &mdash; ${network}`;
   }
 

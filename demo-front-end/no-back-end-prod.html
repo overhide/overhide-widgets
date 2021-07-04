@@ -8,34 +8,13 @@
     <script>
       // Uncomment on of the back-end connection strings below.
 
-      BACKEND_CONNECTION_STRING = `https://demo-back-end.azurewebsites.net/api`;
+      // BACKEND_CONNECTION_STRING = `https://demo-back-end.azurewebsites.net/api`;
       // BACKEND_CONNECTION_STRING = `http://localhost:8100`;
       // BACKEND_CONNECTION_STRING = `http://localhost:7071/api`;
-      // BACKEND_CONNECTION_STRING = `NONE`
+      BACKEND_CONNECTION_STRING = `NONE`
     </script>
 
     <script src="./index.js"></script>
-
-    <script>
-      // Set the token from back-end
-      window.onload = (event) => {
-      fetch(`${BACKEND_CONNECTION_STRING}/GetToken`)
-        .then(async (response) => {
-          if (response.ok) {            
-            const hub = document.createElement('overhide-hub'); 
-            hub.setAttribute('token', await response.text());
-            hub.setAttribute('isTest', true);
-            hub.init();
-            document.querySelector('overhide-login').setHub(hub);
-            document.querySelector('overhide-status').setHub(hub);
-            document.querySelectorAll('overhide-appsell').forEach(e => e.setHub(hub));
-          } else {
-            console.error(`error talking to back-end -- ${response.status} &mdash; ${response.statusText}`);
-          }
-        }).catch(e => console.error(`error talking to back-end -- ${e}`));
-      };
-    </script>
-
   </head>
 
   <body>
@@ -55,15 +34,18 @@
           pointer-events: none;
         }
       </style>
-      <img class="visa" id="visa" src="./assets/visa.png">  
+      <img class="visa" id="visa" src="./assets/visa.png">
+
+      <overhide-hub id="demo-hub" apiKey="0x706ad35096598e8363d669a435880bed581805078649ea1a84591aa3162843e4"></overhide-hub>      
 
       <div class="w3-bar w3-border w3-light-grey">
         <div class="w3-right">
-          <overhide-status></overhide-status>
+          <overhide-status hubId="demo-hub"></overhide-status>
         </div>          
       </div>
 
-      <overhide-login overhideSocialMicrosoftEnabled
+      <overhide-login hubId="demo-hub"
+                      overhideSocialMicrosoftEnabled
                       overhideSocialGoogleEnabled
                       overhideOhledgerWeb3Enabled
                       overhideEthereumWeb3Enabled
@@ -73,6 +55,7 @@
 
       <div class="w3-row w3-padding-64"><div class="w3-col s4">&nbsp</div><div class="w3-col s4 w3-center">
         <overhide-appsell 
+          hubId="demo-hub" 
           loginMessage="Login">
         </overhide-appsell>
       </div></div>
@@ -80,36 +63,39 @@
       <div class="w3-row" style="display: flex; align-content: stretch;">
         <div class="w3-col s4 w3-center">
           <overhide-appsell 
+            hubId="demo-hub" 
             sku="free-feature"
             priceDollars="0"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Login to Use Free Feature"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
-            ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
-            overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
+            bitcoinAddress="bc1q43lsc38x6ez3nd6j6sw2cys8gtjm9zemms84u2"
+            ethereumAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989"
+            overhideAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989">
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
           <overhide-appsell 
             id="foo"
+            hubId="demo-hub" 
             sku="paid-feature"
-            priceDollars="2"
+            priceDollars=".50"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Add Feature ($${topup})"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
-            ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
-            overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F">
+            bitcoinAddress="bc1q43lsc38x6ez3nd6j6sw2cys8gtjm9zemms84u2"
+            ethereumAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989"
+            overhideAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989">
           </overhide-appsell>
         </div>
         <div class="w3-col s4 w3-center">
           <overhide-appsell 
+            hubId="demo-hub" 
             sku="subscribed-feature"
-            priceDollars="3"
+            priceDollars=".75"
             authorizedMessage="Use Feature"
             unauthorizedTemplate="Subscribe Feature For 30 Minutes ($${topup})"
-            bitcoinAddress="tb1qr9d7z0es86sps5f2kefx5grpj4a5yvp4evj80z"
-            ethereumAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
-            overhideAddress="0x046c88317b23dc57F6945Bf4140140f73c8FC80F"
+            bitcoinAddress="bc1q43lsc38x6ez3nd6j6sw2cys8gtjm9zemms84u2"
+            ethereumAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989"
+            overhideAddress="0x5F71Eb078d489FFc46B9519e2BD7085561cFb989"
             withinMinutes="30">
           </overhide-appsell>
         </div>

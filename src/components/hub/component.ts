@@ -137,6 +137,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     }
     this.initSession().then(() => {
       this.initCallbacks();
+      this.initNetworks();
       this.pingApplicationState();  
     });
   };
@@ -621,9 +622,10 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
   }
 
   private initNetworks = () => {
-    oh$.setNetwork('ohledger', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' }); 
-    oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' });
-    oh$.setNetwork('ohledger-social', { currency: 'USD', mode: this.allowNetworkType ? 'test' : 'prod' });
+    oh$.setNetwork('ohledger', { currency: 'USD', mode: this.allowNetworkType == NetworkType.test ? 'test' : 'prod' }); 
+    oh$.setNetwork('ohledger-web3', { currency: 'USD', mode: this.allowNetworkType  == NetworkType.test ? 'test' : 'prod' });
+    oh$.setNetwork('ohledger-social', { currency: 'USD', mode: this.allowNetworkType  == NetworkType.test ? 'test' : 'prod' });
+    oh$.setNetwork('btc-manual', { mode: this.allowNetworkType  == NetworkType.test ? 'test' : 'prod' });
   }
 
   private initSession = async () => {
