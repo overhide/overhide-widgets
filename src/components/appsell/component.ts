@@ -520,7 +520,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
 
     const result = await this.hub.getOutstanding(price, address, this.withinMinutes ? parseFloat(this.withinMinutes) : null);
-    if (result && result.delta) {
+    if (result && typeof result.delta === 'number') {
       this.topupDollars = result.delta;
       this.asOf = result.asOf;  
     }
