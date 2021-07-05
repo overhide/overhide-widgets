@@ -146,7 +146,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   @attr
   priceDollars?: string | null;
 
-  // If this attribute is specified, the component will act as a login button.
+  // If this attribute is specified, the component will act solely as a login button (no payments).
   //
   // All other attribtues except for hubId and orientation are ignored.
   //
@@ -156,6 +156,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   // - unauthorized-footer
   @attr
   loginMessage?: string | null;
+
+  // If set, login modal always pops up when clicked:  always allows re-auth.  Useful when no explicit logout provided in the app.
+  @attr({ mode: 'boolean' })
+  alwaysLogin: boolean = false;
 
   // String to show when component detects fully authorized state.
   @attr
@@ -235,7 +239,7 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
   }
 
   public async click(): Promise<void> {
-    if (this.loginElement && (this.loginMessage || (!this.inhibitLogin && !this.isLogedIn))) {
+    if (this.loginElement && (this.loginMessage || this.alwaysLogin || (!this.inhibitLogin && !this.isLogedIn))) {
       await this.loginElement.open();
     }
 
@@ -323,6 +327,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     if (!this.loginMessage && this.rootElement?.hasAttribute('loginMessage')) {
       this.loginMessage = this.rootElement.getAttribute('loginMessage');
     }
+
+    if (!this.alwaysLogin && this.rootElement?.hasAttribute('alwaysLogin')) {
+      this.alwaysLogin = true;
+    } 
 
     if (!this.inhibitLogin && this.rootElement?.hasAttribute('inhibitLogin')) {
       this.inhibitLogin = !!this.rootElement.getAttribute('inhibitLogin');
@@ -512,8 +520,10 @@ export class OverhideAppsell extends FASTElement implements IOverhideAppsell {
     }
 
     const result = await this.hub.getOutstanding(price, address, this.withinMinutes ? parseFloat(this.withinMinutes) : null);
-    this.topupDollars = result.delta;
-    this.asOf = result.asOf;
+    if (result && result.delta) {
+      this.topupDollars = result.delta;
+      this.asOf = result.asOf;  
+    }
 
     const event: IOverhideSkuTopupOutstandingEvent = <IOverhideSkuTopupOutstandingEvent> {
       sku: this.sku,

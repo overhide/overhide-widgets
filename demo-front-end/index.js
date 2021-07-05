@@ -49,7 +49,7 @@ window.addEventListener('overhide-appsell-sku-clicked',(e) => {
     +`&from=${e.detail.from}`
     +`&isTest=${e.detail.isTest}`
     +`&message=${btoa(e.detail.message)}`
-    +`&signature=${e.detail.signature}`)
+    +`&signature=${btoa(e.detail.signature)}`)
     .then(response => {
       if (response.ok) {
         addMessage(e.detail.sku);

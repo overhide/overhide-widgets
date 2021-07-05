@@ -331,7 +331,7 @@ export class OverhideHub extends FASTElement implements IOverhideHub {
     try {
       this.paymentsInfo.pendingTransaction = <IOverhidePendingTransactionEvent>{isPending: true, currency: this.paymentsInfo.currentCurrency};
       this.$emit('overhide-hub-pending-transaction', this.paymentsInfo.pendingTransaction);
-      const amount = amountDollars == 0 ? amountDollars : await oh$.getFromDollars(imparter, amountDollars);
+      const amount = Math.ceil(amountDollars == 0 ? amountDollars : await oh$.getFromDollars(imparter, amountDollars));
       const aDayAgo = new Date((new Date()).getTime() - 24*60*60*1000);     // we compare tallies...
       if (amount > 0) {
         var before = await oh$.getTallyDollars(imparter, {address: toAddress}, aDayAgo);  // ... by taking a sample before

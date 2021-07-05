@@ -258,15 +258,15 @@ All demos below show one or the other.
 
 You can include *overhide-widgets* via CDN:
 
-* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.16/dist/overhide-widgets.js`
+* `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.17/dist/overhide-widgets.js`
 
 You can see all the [/demo-front-end/*.html](/demo-front-end) demos load it this way:
 
 ```
-<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.16/dist/overhide-widgets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.17/dist/overhide-widgets.js"></script>
 ```
 
-In our demos we specifically load the latest version, e.g. version *1.0.16*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.16/dist/overhide-widgets.js`
+In our demos we specifically load the latest version, e.g. version *1.0.17*: `https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.17/dist/overhide-widgets.js`
 
 The widgets can then be used in your DOM and via your framework JavaScript.
 
@@ -277,7 +277,7 @@ In [npm](https://www.npmjs.com/) based app projects, include the components and 
 ```
 "dependencies": {
   ..
-  "overhide-widgets": "1.0.16",
+  "overhide-widgets": "1.0.17",
   ..
 }
 ```
@@ -580,9 +580,16 @@ These widgets are fully customizable through [slots](https://developer.mozilla.o
 
 *loginMessage* 
 
-- if this button is supposed to be an overall login button, specify this message
+- if this button is supposed to be an overall login button and never be used for a feature, specify this message
 - if this message is specified, do not specify any other attributes other than the *hubId*
 - this message is shown in the *authorized-button* and *unauthorized-button* slots
+
+*alwaysLogin*
+
+- if this button should always show the login modal when clicked
+- set to true when no means to logout is provided &mdash; enables user to always choose authorization method
+- likely shouldn't be set if a button with *loginMessage* is provided or an [overhide-status](#overhide-status) component is used in the page &mdash; as those buttons allow re-login
+- useful for donation buttons when they're the sole button on the page
 
 *authorizedMessage*
 

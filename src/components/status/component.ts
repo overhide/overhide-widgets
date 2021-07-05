@@ -264,10 +264,12 @@ export class OverhideStatus extends FASTElement implements IOverhideStatus {
           break;
         case Imparter.ohledgerWeb3:
           this.logo = 'wallet';
+          this.canLogout = true;
           this.canGetTransactions = true;
           break;
         case Imparter.ethWeb3:
           this.logo = 'eth';
+          this.canLogout = true;
           this.canGetTransactions = true;
           break;
         case Imparter.btcManual:
