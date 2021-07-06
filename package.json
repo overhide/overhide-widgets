@@ -1,6 +1,6 @@
 {
   "name": "overhide-widgets",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "",
   "main": "dist/overhide-widgets.js",
   "types": "dist/overhide-widgets.d.ts",
