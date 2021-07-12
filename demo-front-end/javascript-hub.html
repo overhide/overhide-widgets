@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="./assets/demo.css">
     <script src="https://cdn.jsdelivr.net/npm/overhide-widgets@1.0.19/dist/overhide-widgets.js"></script>
 
     <script>
@@ -62,6 +63,17 @@
           <overhide-status></overhide-status>
         </div>          
       </div>
+
+      <!-- info note-->
+      <div class="w3-container note-container"><div class="w3-card w3-sand w3-margin note">
+        <img class="w3-left info" src="./assets/info.png">
+        <p>Same as the basic demo except the <em>overhide-hub</em> component is not wired up throught the DOM, but through JavaScript.  This approach is useful when wireing up the widgets in a framework &mdash; where everything happens through JavaScript.</p>
+        <p>Shows off all widgets.  Using features causes back-end endpoint invocations with authorization checks.</p>
+        <p>In the top-right we see the <em>overhide-status</em> widget &mdash; allows (re)login, transaction check, logout, and payments refresh.</p>
+        <p>Just below we see an explicit "login" button (<em>overhide-appsell</em> widget).  This button always allows (re)login and never starts a feature flow.</p>
+        <p>At the bottom we see three feature buttons (<em>overhide-appsell</em> widgets).  These cause initial login and feature flows &mdash; through the backe-end &mdash; at different payment tiers.</p>
+        <p><a href="https://github.com/overhide/overhide-widgets#demos">...back to demos</a></p>        
+      </div></div>
 
       <overhide-login overhideSocialMicrosoftEnabled
                       overhideSocialGoogleEnabled
