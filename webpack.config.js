@@ -4,7 +4,7 @@ module.exports = function(env, { mode }) {
   const production = mode === 'production';
   return {
     mode: production ? 'production' : 'development',
-    devtool: production ? 'source-maps' : 'inline-source-map',
+    devtool: production ? '' : 'inline-source-map',
     entry: {
       app: ['./src/overhide-widgets.ts']
     },
